@@ -1,0 +1,39 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Formater le code",
+            "type": "shell",
+            "command": "ruff format .",
+            "problemMatcher": []
+        },
+        {
+            "label": "Vérifier le standard",
+            "type": "shell",
+            "command": "ruff check .",
+            "problemMatcher": []
+        },
+        {
+            "label": "Formater et vérifier",
+            "dependsOn": ["Formater le code", "Vérifier le standard"],
+            "dependsOrder": "sequence",
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": []
+        },
+        {
+            "label": "Générer la documentation (Doxygen)",
+            "type": "shell",
+            "command": "doxygen Doxyfile",
+            "problemMatcher": []
+        },
+        {
+            "label": "Ouvrir la documentation",
+            "type": "shell",
+            "dependsOn": ["Générer la documentation (Doxygen)"],
+            "windows": { "command": "start doxygen/html/index.html" },
+            "linux": { "command": "xdg-open doxygen/html/index.html" },
+            "osx": { "command": "open doxygen/html/index.html" },
+            "problemMatcher": []
+        }
+    ]
+}

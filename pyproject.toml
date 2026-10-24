@@ -1,0 +1,31 @@
+# Configuration des outils de qualité du projet EDGECS.
+# Ruff joue pour Python le rôle de clang-format (formatage) et vérifie
+# automatiquement une partie du standard de programmation (voir STANDARD.md).
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["doxygen"]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # style de base (PEP 8)
+    "F",       # erreurs : variables inutilisées, import * interdit (règle 3)
+    "I",       # ordre des imports
+    "N",       # nommage (règle 1)
+    "ANN",     # annotations de type obligatoires (règle 4)
+    "UP",      # syntaxe Python moderne
+    "B",       # pièges courants (arguments par défaut mutables, etc.)
+    "SIM",     # simplifications
+    "RET",     # retours anticipés et valeurs de retour cohérentes
+    "C90",     # complexité des fonctions (« never nesting »)
+    "PLR2004", # nombres magiques (règle 6)
+]
+ignore = ["ANN401"]  # Any est toléré quand une API externe l'impose
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10

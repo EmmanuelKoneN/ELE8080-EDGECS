@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Gateway",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "gateway.main",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "DERMS",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "derms.main",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "MVP : Gateway + DERMS",
+            "configurations": ["Gateway", "DERMS"],
+            "stopAll": true
+        }
+    ]
+}

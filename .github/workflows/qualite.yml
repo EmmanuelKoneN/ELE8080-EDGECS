@@ -1,0 +1,43 @@
+# Vérifie chaque pull request : formatage, standard de programmation et documentation.
+name: Qualité
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  format-et-standard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements-dev.txt
+      - name: Formatage Python (Ruff)
+        run: ruff format --check --diff .
+      - name: Standard de programmation (Ruff)
+        run: ruff check .
+      - name: Formatage C/C++ (clang-format)
+        run: |
+          find . \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.c' \) -not -path './.git/*' \
+            | xargs -r clang-format --dry-run --Werror
+
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y doxygen
+      - name: Générer la documentation
+        run: doxygen Doxyfile
+      - name: Aucun élément public non documenté
+        run: |
+          if [ -s doxygen/avertissements.txt ]; then
+            cat doxygen/avertissements.txt
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: documentation-doxygen
+          path: doxygen/html
