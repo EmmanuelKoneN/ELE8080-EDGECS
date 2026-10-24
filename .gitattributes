@@ -1,0 +1,6 @@
+# Fins de ligne Unix (LF) pour tous les fichiers texte : évite les problèmes
+# entre Windows et Linux (Docker, Raspberry Pi).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary

@@ -1,0 +1,21 @@
+{
+    "editor.formatOnSave": true,
+    "editor.rulers": [100],
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit",
+            "source.fixAll": "explicit"
+        }
+    },
+    "ruff.importStrategy": "fromEnvironment",
+
+    "[cpp]": { "editor.defaultFormatter": "xaver.clang-format" },
+    "[c]": { "editor.defaultFormatter": "xaver.clang-format" },
+
+    "python.analysis.typeCheckingMode": "basic"
+}

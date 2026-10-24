@@ -1,0 +1,60 @@
+# Doxyfile — EDGECS
+# Seuls les réglages qui diffèrent des valeurs par défaut sont listés.
+# Pour la liste complète et commentée : doxygen -g Doxyfile.complet
+# Lancer depuis la racine du dépôt : doxygen Doxyfile
+
+#---------------------------------------------------------------------------
+# Projet
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "EDGECS"
+PROJECT_BRIEF          = "DERMS sur site avec interface DNP3 vers des passerelles DER"
+OUTPUT_LANGUAGE        = French
+
+# Comme dans le cours : la documentation est générée dans doxygen/ (ignoré par Git)
+OUTPUT_DIRECTORY       = doxygen/
+
+#---------------------------------------------------------------------------
+# Fichiers à lire
+#---------------------------------------------------------------------------
+# README.md est la page d'accueil ; les autres fichiers .md ne sont pas inclus
+INPUT                  = README.md derms gateway
+FILE_PATTERNS          = *.py *.h *.hpp *.cpp
+RECURSIVE              = YES
+EXCLUDE_PATTERNS       = */__pycache__/* */.venv/* */build/*
+USE_MDFILE_AS_MAINPAGE = README.md
+
+#---------------------------------------------------------------------------
+# Python
+#---------------------------------------------------------------------------
+# Les docstrings sont lues comme des commentaires Doxygen : @brief, @param,
+# @return, etc. y sont reconnus (voir STANDARD.md).
+PYTHON_DOCSTRING       = NO
+OPTIMIZE_OUTPUT_JAVA   = YES
+
+#---------------------------------------------------------------------------
+# Ce qui est documenté
+#---------------------------------------------------------------------------
+# Documentation externe : seulement l'interface publique (cours 5)
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = NO
+HIDE_UNDOC_MEMBERS     = NO
+
+#---------------------------------------------------------------------------
+# Avertissements : signale ce qui n'est pas documenté
+#---------------------------------------------------------------------------
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+WARN_LOGFILE           = doxygen/avertissements.txt
+
+#---------------------------------------------------------------------------
+# Sorties
+#---------------------------------------------------------------------------
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_TREEVIEW      = YES
+SOURCE_BROWSER         = YES
+HAVE_DOT               = NO
