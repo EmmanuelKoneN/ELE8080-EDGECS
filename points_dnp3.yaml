@@ -1,0 +1,4 @@
+# Points DNP3 partagés entre le DERMS et la gateway — brouillon
+der1:
+  mesures:   {0: p_mesuree_kw, 1: soc_pct}
+  consignes: {0: consigne_p_kw}
