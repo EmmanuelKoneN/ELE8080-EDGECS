@@ -2,6 +2,7 @@
 **DERMS sur site avec interface DNP3 vers des passerelles DER**
 
 Projet intégrateur de grande envergure (ELE8080), Polytechnique Montréal, automne 2026 – hiver 2027.
+
 Client : Eaton – Centre d'excellence Energy Control Systems (ECS).
 
 ## Contexte
