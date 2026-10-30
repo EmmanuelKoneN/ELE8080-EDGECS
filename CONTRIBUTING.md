@@ -1,4 +1,9 @@
-# Standard de programmation EDGECS
+# Contribuer à EDGECS
+
+Ce document réunit le standard de programmation, les règles d'équipe, le fonctionnement interne
+du dépôt et les tutoriels. Pour la présentation du système, voir le [README](README.md).
+
+## Standard de programmation EDGECS
 
 Ce standard reprend les pratiques du cours ELE4205 (Git, Doxygen, clang-format et
 standard de programmation C++17) et les adapte à Python, le langage principal du projet.
@@ -23,6 +28,26 @@ Les autres sont vérifiées lors de la revue de code.
 
 Le formatage se fait **automatiquement à l'enregistrement** dans VS Code.
 Personne ne discute du style : l'outil décide.
+
+### Installation
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+```
+
+### Commandes
+
+Tout se lance depuis la racine du dépôt.
+
+```bash
+ruff format .      # formater
+ruff check .       # vérifier le standard
+doxygen Doxyfile   # générer la documentation
+```
+
+Ces commandes sont aussi offertes comme tâches VS Code : « Formater le code », « Vérifier le
+standard », « Formater et vérifier », « Générer la documentation (Doxygen) » et « Ouvrir la
+documentation ».
 
 ---
 
@@ -239,6 +264,13 @@ dans `doxygen/avertissements.txt`. Ce fichier doit être vide avant une pull req
 
 ## 5. Git
 
+### Règles de travail
+
+- Ne jamais pousser directement sur `main`.
+- Une branche par tâche (ex. `feature/planification`), puis une pull request.
+- Chaque pull request est relue par au moins un autre membre avant d'être fusionnée.
+- Toute modification de `points_dnp3.yaml` doit être validée par le volet Communication.
+
 ### Nomenclature des branches
 
 | Branche | Usage |
@@ -260,8 +292,37 @@ dans `doxygen/avertissements.txt`. Ce fichier doit être vide avant une pull req
 
 Une branche dont le travail dure plus d'une journée est poussée sur GitHub chaque jour.
 
+La description de la pull request suit le gabarit `.github/pull_request_template.md`, qui demande
+notamment les exigences du cahier des charges touchées (ex. F-203, G-002).
+
 ### Ce qui ne va jamais dans le dépôt
 
 Les dossiers générés (`doxygen/`, `build/`, `__pycache__/`), les configurations
 personnelles et les fichiers propres à votre machine. Seuls les réglages d'équipe de
 `.vscode/` sont partagés.
+
+---
+
+## 6. Intégration continue
+
+Chaque pull request et chaque poussée sur `main` lancent `.github/workflows/qualite.yml`, sous
+Python 3.11 :
+
+| Vérification | Commande |
+|---|---|
+| Formatage Python | `ruff format --check --diff .` |
+| Standard de programmation | `ruff check .` |
+| Formatage C/C++ | `clang-format --dry-run --Werror` sur les fichiers C/C++ |
+| Documentation | `doxygen Doxyfile` |
+
+La vérification de la documentation échoue si `doxygen/avertissements.txt` n'est pas vide. La
+documentation générée est conservée comme artefact `documentation-doxygen`.
+
+---
+
+## 7. Tutoriels
+
+- Générer la documentation : voir « Générer la documentation » à la section 4.
+- Contribuer une modification : voir « Flux de travail » à la section 5.
+
+> **TODO** : ajouter les tutoriels manquants à mesure que le code se précise.
