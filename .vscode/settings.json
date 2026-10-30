@@ -5,6 +5,17 @@
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
 
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.ruff_cache": true
+    },
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.expand": false,
+    "explorer.fileNesting.patterns": {
+        "README.md": "CONTRIBUTING.md, CLAUDE.md",
+        "pyproject.toml": "requirements*.txt, Doxyfile, .clang-format, .gitattributes, .gitignore"
+    },
+
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.codeActionsOnSave": {
