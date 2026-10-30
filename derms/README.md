@@ -15,12 +15,44 @@ Pour la vue d'ensemble du système, voir le [README principal](../README.md).
 | `dnp3_master/` | Client DNP3 (station maîtresse) : envoie les consignes, lit les mesures |
 | `simulation_pcc/` | Réseau simulé : fournit la puissance au point de couplage commun (PCC) |
 
-**Lancer :** depuis la racine du dépôt, `python -m derms.main`
+**Lancer :** depuis la racine du dépôt, `python -m derms.main`. Ctrl+C arrête le serveur.
+
+Les décisions, les protocoles et les limites connues sont dans
+[docs/serveur_derms.md](../docs/serveur_derms.md).
+
+## Démarrage du serveur
+
+`derms/main.py` lance FastAPI avec Uvicorn. `derms/serveur.py` démarre ensuite les modules dans
+l'ordre suivant, et les arrête dans l'ordre inverse :
+
+1. `configuration/`
+2. `stockage/`
+3. `initialisation/`
+4. `dnp3_master/`
+5. `simulation_pcc/`
+6. `planification/`
+7. `interface_ui/`
+
+Pour l'instant, chaque module confirme seulement son démarrage. L'échec d'un module n'arrête pas le
+serveur : le module passe à l'état `en_echec`, et les autres continuent de démarrer.
+
+`http://127.0.0.1:8000/sante` présente l'état de chaque module dans une page lisible.
+`http://127.0.0.1:8000/api/sante` donne la même information en JSON, avec le statut global `ok` ou
+`degrade`.
+
+Un module est pour l'instant un objet qui offre `name`, `async start()` et `async stop()`. Le contrat
+définitif reste à choisir par l'équipe.
+
+| Port | Protocole | Rôle |
+|---|---|---|
+| `8000` | HTTP | Interface Web du DERMS |
 
 ## Fonctionnement du serveur
 
 Selon le [diagramme d'architecture](../assets/EDGECS_architecture.drawio), le serveur DERMS est un
 hôte Linux. L'opérateur y accède par navigateur Web, en HTTP(S).
+
+Pour le MVP, la simulation du réseau s'exécute à l'intérieur du serveur, dans `simulation_pcc/`.
 
 Échanges logiciels internes :
 
@@ -41,7 +73,8 @@ La cible est définie dans `derms/main.py` :
 | `GATEWAY_ADDRESS` | `127.0.0.1` | Adresse de la passerelle DNP3 à joindre |
 | `GATEWAY_PORT` | `20000` | Port DNP3 de la passerelle |
 
-Pour l'instant, `derms/main.py` affiche seulement « à implémenter » et ne vise qu'une passerelle.
+Pour l'instant, `dnp3_master/` confirme seulement son démarrage : aucune liaison DNP3 n'est établie,
+et ces constantes ne sont pas encore utilisées.
 
 Les points DNP3 sont définis dans [points_dnp3.yaml](../points_dnp3.yaml), encore à l'état de
 brouillon. Ce fichier est le contrat avec la passerelle : voir la règle d'équipe dans

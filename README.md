@@ -83,6 +83,7 @@ Diagramme de référence : [assets/EDGECS_architecture.drawio](assets/EDGECS_arc
 | `derms/` | Serveur DERMS : UI, initialisation, configuration, planification, stockage, client DNP3, simulation du réseau au PCC |
 | `gateway/` | Passerelle DER : outstation DNP3, application réceptrice, journaux, simulation des DER |
 | `points_dnp3.yaml` | Liste des points DNP3 partagée par les deux côtés (le « contrat » entre DERMS et gateway) |
+| `docs/` | Documentation de conception, dont le fonctionnement du serveur DERMS et ses décisions |
 | `assets/` | Diagramme d'architecture |
 | `requirements.txt` | Dépendances Python |
 | `requirements-dev.txt` | Outils de développement et d'analyse |
@@ -92,21 +93,23 @@ Diagramme de référence : [assets/EDGECS_architecture.drawio](assets/EDGECS_arc
 
 Pour l'instant, tout tourne sur le même ordinateur et communique en DNP3 via `127.0.0.1`.
 
-Le projet est au stade de l'échafaudage : les deux programmes démarrent, mais affichent seulement
-« à implémenter ». Aucun échange DNP3 n'a encore lieu.
+Le projet est au stade de l'échafaudage : la passerelle affiche seulement « à implémenter », et le
+serveur DERMS démarre ses modules, qui confirment seulement leur démarrage. Aucun échange DNP3 n'a
+encore lieu.
 
 ```bash
 pip install -r requirements.txt
 
-# Terminal 1 : la passerelle (écoute sur le port 20000)
+# Terminal 1 : la passerelle
 python -m gateway.main
 
-# Terminal 2 : le DERMS (se connecte à la passerelle)
+# Terminal 2 : le serveur DERMS, actif jusqu'à Ctrl+C
 python -m derms.main
 ```
 
+L'état des modules du DERMS se consulte sur `http://127.0.0.1:8000/sante`.
+
 Pour une 2e ou 3e passerelle : `python -m gateway.main 20001`, `python -m gateway.main 20002`.
-Le DERMS ne vise pour l'instant que le port 20000.
 
 ## Équipe
 
@@ -123,5 +126,6 @@ Membres : Chloé Truchon, Alireza Jafari, Cazy Gaspard, Flavio Zapata, Emmanuel 
 
 <!-- Balises <a> : Doxygen lit ce fichier, mais pas les .md ciblés (voir INPUT dans le Doxyfile). -->
 - <a href="derms/README.md">derms/README.md</a> : serveur DERMS, client DNP3 maître et simulation du réseau
+- <a href="docs/serveur_derms.md">docs/serveur_derms.md</a> : fonctionnement du serveur DERMS, protocoles et décisions
 - <a href="gateway/README.md">gateway/README.md</a> : passerelle DER, outstation DNP3 et modèles DER
 - <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> : standard de programmation, règles d'équipe et tutoriels

@@ -39,6 +39,8 @@ EXTRACT_ALL            = NO
 EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = NO
 HIDE_UNDOC_MEMBERS     = NO
+# En Python, Doxygen traite _nom comme protégé : EXTRACT_PRIVATE ne suffit pas à l'exclure.
+EXCLUDE_SYMBOLS        = _*
 
 #---------------------------------------------------------------------------
 # Avertissements : signale ce qui n'est pas documenté
