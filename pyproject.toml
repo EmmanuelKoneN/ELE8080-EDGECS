@@ -1,6 +1,6 @@
 # Configuration des outils de qualité du projet EDGECS.
 # Ruff joue pour Python le rôle de clang-format (formatage) et vérifie
-# automatiquement une partie du standard de programmation (voir STANDARD.md).
+# automatiquement une partie du standard de programmation (voir CONTRIBUTING.md).
 
 [tool.ruff]
 line-length = 100

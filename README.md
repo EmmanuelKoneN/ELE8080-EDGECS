@@ -83,10 +83,10 @@ Pour une 2e ou 3e passerelle : `python -m gateway.main 20001`, `python -m gatewa
 
 | Volet | Responsable(s) |
 |---|---|
-| DERMS | *à compléter* |
-| Gateway | *à compléter* |
-| Communication (DNP3) | *à compléter* |
-| Simulation (réseau + DER) | *à compléter* |
+| DERMS | Chloé Truchon & Emmanuel Kone |
+| Gateway | Adja Sokhna Fall & Alireza Jafari |
+| Communication (DNP3) | Cazy Gaspard |
+| Simulation (réseau + DER) | Flavio Zapata |
 
 Membres : Chloé Truchon, Alireza Jafari, Cazy Gaspard, Flavio Zapata, Emmanuel Kone, Adja Sokhna Fall.
 

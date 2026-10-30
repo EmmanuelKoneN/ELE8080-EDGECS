@@ -27,7 +27,7 @@ USE_MDFILE_AS_MAINPAGE = README.md
 # Python
 #---------------------------------------------------------------------------
 # Les docstrings sont lues comme des commentaires Doxygen : @brief, @param,
-# @return, etc. y sont reconnus (voir STANDARD.md).
+# @return, etc. y sont reconnus (voir CONTRIBUTING.md).
 PYTHON_DOCSTRING       = NO
 OPTIMIZE_OUTPUT_JAVA   = YES
 

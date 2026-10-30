@@ -9,6 +9,6 @@
 - [ ] La branche suit la nomenclature (`feature/…`, `bugfix/…`, `poc/…`)
 - [ ] `main` a été fusionnée dans ma branche et les conflits sont réglés localement
 - [ ] Le code est formaté (`ruff format .`)
-- [ ] Le standard est respecté (`ruff check .` et STANDARD.md)
+- [ ] Le standard est respecté (`ruff check .` et CONTRIBUTING.md)
 - [ ] Les éléments publics sont documentés en format Doxygen (`doxygen Doxyfile` sans avertissement)
 - [ ] Le programme a été testé localement
