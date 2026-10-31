@@ -91,98 +91,10 @@ Diagramme de référence : [assets/EDGECS_architecture.drawio](assets/EDGECS_arc
 | `requirements-dev.txt` | Outils de développement et d'analyse |
 | `CONTRIBUTING.md` | Standard de programmation, règles d'équipe, outils et tutoriels |
 
-## Installation de zéro
-
-L'équipe développe sous **Linux**, dans Ubuntu avec WSL2 : le client exige un serveur Linux, et une
-bibliothèque DNP3 envisagée n'existe que pour Linux. WSL2 fait tourner Ubuntu dans Windows, sans
-double démarrage. VS Code reste installé sous Windows, mais le code, le terminal et Python sont
-dans Ubuntu.
-
-Il faut Windows 10 ou 11, [VS Code](https://code.visualstudio.com/) et
-[Git pour Windows](https://git-scm.com/download/win).
-
-### 1. Installer Ubuntu
-
-Dans PowerShell, ouvert avec **Exécuter en tant qu'administrateur** :
-
-```powershell
-wsl --install
-```
-
-Redémarrez si on vous le demande, puis ouvrez **Ubuntu** depuis le menu Démarrer et créez votre
-utilisateur Linux. L'erreur `ERROR_ALREADY_EXISTS` veut dire qu'Ubuntu est déjà installé :
-`wsl --list --verbose` doit l'afficher en version 2.
-
-### 2. Préparer VS Code
-
-Dans VS Code, installez l'extension **WSL** de Microsoft (Ctrl+Maj+X).
-
-### 3. Cloner le dépôt dans Ubuntu
-
-Dans le terminal Ubuntu, en remplaçant le nom et le courriel :
-
-```bash
-git config --global user.name "Prénom Nom"
-git config --global user.email "votre@courriel"
-git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/bin/git-credential-manager.exe"
-
-cd ~
-git clone https://github.com/EmmanuelKoneN/ELE8080-EDGECS.git
-cd ELE8080-EDGECS
-```
-
-La troisième ligne réutilise la connexion GitHub de Windows. Le dépôt doit rester dans votre dossier
-Linux (`~/`), pas dans `/mnt/c/` : les accès aux fichiers Windows depuis Ubuntu sont plus lents.
-
-### 4. Installer Python 3.11 et les dépendances
-
-La CI utilise Python 3.11, qu'Ubuntu ne fournit pas forcément. `uv` l'installe dans un environnement
-propre au projet (`.venv/`), sans toucher au Python du système :
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-source ~/.local/bin/env
-
-uv venv --python 3.11 .venv
-source .venv/bin/activate
-uv pip install -r requirements.txt -r requirements-dev.txt
-```
-
-`python --version` doit afficher `3.11.x`, et `(.venv)` doit apparaître au début de la ligne de
-commande.
-
-### 5. Ouvrir le projet dans VS Code
-
-```bash
-code .
-```
-
-**WSL: Ubuntu** doit s'afficher en bas à gauche de VS Code. Installez ensuite les extensions
-recommandées dans WSL : dans le panneau Extensions, cliquez sur **Install in WSL: Ubuntu** pour
-chacune. Le projet utilise `.venv` par défaut ; sinon, choisissez-le avec Ctrl+Maj+P, puis
-**Python: Select Interpreter**.
-
-### 6. Vérifier l'installation
-
-Dans le terminal de VS Code :
-
-```bash
-python -m derms.main
-```
-
-Ouvrez `http://127.0.0.1:8000/sante` dans votre navigateur : la page doit afficher
-**7 modules démarrés sur 7**. Ctrl+C arrête le serveur.
-
-Vérifiez aussi votre connexion GitHub avec `git push` depuis une branche de travail : le résultat
-attendu est `Everything up-to-date`. Une fenêtre de connexion peut s'ouvrir la première fois.
-
-### Outils facultatifs
-
-- **Doxygen** : `sudo apt install doxygen`, pour vérifier la documentation avant une pull request.
-- **Docker** : pour la passerelle, activez Ubuntu dans Docker Desktop, sous
-  **Settings → Resources → WSL Integration**.
-
 ## Travailler au quotidien
+
+L'installation de l'environnement est décrite dans la section « Installation de zéro » de
+<a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.
 
 1. Ouvrez VS Code, puis **File → Open Recent** et `ELE8080-EDGECS [WSL: Ubuntu]`. Il n'est pas
    nécessaire d'ouvrir Ubuntu à part.

@@ -19,7 +19,7 @@ Restent à décider en équipe : le contrat des modules et la bibliothèque DNP3
 
 ## 2. Lancer et vérifier
 
-L'installation complète, de zéro, est dans la section « Installation de zéro » du README principal.
+L'installation complète est dans la section « Installation de zéro » de `CONTRIBUTING.md`.
 Ensuite, depuis la racine du dépôt, dans Ubuntu :
 
 ```bash
