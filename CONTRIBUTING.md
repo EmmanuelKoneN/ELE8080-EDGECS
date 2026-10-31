@@ -31,8 +31,12 @@ Personne ne discute du style : l'outil décide.
 
 ### Installation
 
+L'équipe développe dans Ubuntu avec WSL2, et le dépôt est cloné dans le dossier Linux (`~/`). Le
+guide complet est dans la section « Installation de zéro » du [README](README.md). Dans
+l'environnement `.venv` :
+
 ```bash
-pip install -r requirements.txt -r requirements-dev.txt
+uv pip install -r requirements.txt -r requirements-dev.txt
 ```
 
 ### Commandes
@@ -322,6 +326,7 @@ documentation générée est conservée comme artefact `documentation-doxygen`.
 
 ## 7. Tutoriels
 
+- Installer l'environnement : voir « Installation de zéro » dans le [README](README.md).
 - Générer la documentation : voir « Générer la documentation » à la section 4.
 - Contribuer une modification : voir « Flux de travail » à la section 5.
 

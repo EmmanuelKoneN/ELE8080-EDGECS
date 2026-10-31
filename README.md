@@ -64,7 +64,9 @@ Diagramme de référence : [assets/EDGECS_architecture.drawio](assets/EDGECS_arc
 
 ## Technologies
 
-- **Python** (langage principal)
+- **Python 3.11** (langage principal), avec un environnement virtuel géré par **uv**
+- **FastAPI + Uvicorn** pour le serveur Web du DERMS
+- **WSL2 + Ubuntu 24.04** comme environnement Linux de développement sous Windows
 - **DNP3** : bibliothèque de communication
 - **Docker** pour l'application réceptrice (exigence du client)
 
@@ -89,27 +91,142 @@ Diagramme de référence : [assets/EDGECS_architecture.drawio](assets/EDGECS_arc
 | `requirements-dev.txt` | Outils de développement et d'analyse |
 | `CONTRIBUTING.md` | Standard de programmation, règles d'équipe, outils et tutoriels |
 
-## Démarrage rapide
+## Installation de zéro
 
-Pour l'instant, tout tourne sur le même ordinateur et communique en DNP3 via `127.0.0.1`.
+L'équipe développe sous **Linux**, dans Ubuntu avec WSL2 : le client exige un serveur Linux, et une
+bibliothèque DNP3 envisagée n'existe que pour Linux. WSL2 fait tourner Ubuntu dans Windows, sans
+double démarrage. VS Code reste installé sous Windows, mais le code, le terminal et Python sont
+dans Ubuntu.
 
-Le projet est au stade de l'échafaudage : la passerelle affiche seulement « à implémenter », et le
-serveur DERMS démarre ses modules, qui confirment seulement leur démarrage. Aucun échange DNP3 n'a
-encore lieu.
+Il faut Windows 10 ou 11, [VS Code](https://code.visualstudio.com/) et
+[Git pour Windows](https://git-scm.com/download/win).
+
+### 1. Installer Ubuntu
+
+Dans PowerShell, ouvert avec **Exécuter en tant qu'administrateur** :
+
+```powershell
+wsl --install
+```
+
+Redémarrez si on vous le demande, puis ouvrez **Ubuntu** depuis le menu Démarrer et créez votre
+utilisateur Linux. L'erreur `ERROR_ALREADY_EXISTS` veut dire qu'Ubuntu est déjà installé :
+`wsl --list --verbose` doit l'afficher en version 2.
+
+### 2. Préparer VS Code
+
+Dans VS Code, installez l'extension **WSL** de Microsoft (Ctrl+Maj+X).
+
+### 3. Cloner le dépôt dans Ubuntu
+
+Dans le terminal Ubuntu, en remplaçant le nom et le courriel :
 
 ```bash
-pip install -r requirements.txt
+git config --global user.name "Prénom Nom"
+git config --global user.email "votre@courriel"
+git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/bin/git-credential-manager.exe"
 
-# Terminal 1 : la passerelle
+cd ~
+git clone https://github.com/EmmanuelKoneN/ELE8080-EDGECS.git
+cd ELE8080-EDGECS
+```
+
+La troisième ligne réutilise la connexion GitHub de Windows. Le dépôt doit rester dans votre dossier
+Linux (`~/`), pas dans `/mnt/c/` : les accès aux fichiers Windows depuis Ubuntu sont plus lents.
+
+### 4. Installer Python 3.11 et les dépendances
+
+La CI utilise Python 3.11, qu'Ubuntu ne fournit pas forcément. `uv` l'installe dans un environnement
+propre au projet (`.venv/`), sans toucher au Python du système :
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.local/bin/env
+
+uv venv --python 3.11 .venv
+source .venv/bin/activate
+uv pip install -r requirements.txt -r requirements-dev.txt
+```
+
+`python --version` doit afficher `3.11.x`, et `(.venv)` doit apparaître au début de la ligne de
+commande.
+
+### 5. Ouvrir le projet dans VS Code
+
+```bash
+code .
+```
+
+**WSL: Ubuntu** doit s'afficher en bas à gauche de VS Code. Installez ensuite les extensions
+recommandées dans WSL : dans le panneau Extensions, cliquez sur **Install in WSL: Ubuntu** pour
+chacune. Le projet utilise `.venv` par défaut ; sinon, choisissez-le avec Ctrl+Maj+P, puis
+**Python: Select Interpreter**.
+
+### 6. Vérifier l'installation
+
+Dans le terminal de VS Code :
+
+```bash
+python -m derms.main
+```
+
+Ouvrez `http://127.0.0.1:8000/sante` dans votre navigateur : la page doit afficher
+**7 modules démarrés sur 7**. Ctrl+C arrête le serveur.
+
+Vérifiez aussi votre connexion GitHub avec `git push` depuis une branche de travail : le résultat
+attendu est `Everything up-to-date`. Une fenêtre de connexion peut s'ouvrir la première fois.
+
+### Outils facultatifs
+
+- **Doxygen** : `sudo apt install doxygen`, pour vérifier la documentation avant une pull request.
+- **Docker** : pour la passerelle, activez Ubuntu dans Docker Desktop, sous
+  **Settings → Resources → WSL Integration**.
+
+## Travailler au quotidien
+
+1. Ouvrez VS Code, puis **File → Open Recent** et `ELE8080-EDGECS [WSL: Ubuntu]`. Il n'est pas
+   nécessaire d'ouvrir Ubuntu à part.
+2. Vérifiez que **WSL: Ubuntu** s'affiche en bas à gauche, et n'utilisez que cette fenêtre.
+3. Lancez les programmes depuis le terminal de VS Code, à la racine du dépôt :
+
+```bash
+source .venv/bin/activate    # si (.venv) n'apparaît pas
+
+# Terminal 1 : la passerelle (port 20000 par défaut)
 python -m gateway.main
 
 # Terminal 2 : le serveur DERMS, actif jusqu'à Ctrl+C
 python -m derms.main
 ```
 
-L'état des modules du DERMS se consulte sur `http://127.0.0.1:8000/sante`.
-
 Pour une 2e ou 3e passerelle : `python -m gateway.main 20001`, `python -m gateway.main 20002`.
+La configuration **DERMS** de « Exécuter et déboguer » (F5) fonctionne aussi. N'utilisez pas le
+bouton ▶ : il lance le fichier seul, et Python ne trouve plus le paquet `derms`.
+
+Le projet est au stade de l'échafaudage : la passerelle affiche seulement « à implémenter », et les
+modules du DERMS confirment seulement leur démarrage. Aucun échange DNP3 n'a encore lieu.
+
+| Problème | Solution |
+|---|---|
+| `No module named 'derms'` | Lancez `python -m derms.main` depuis la racine, pas le bouton ▶ |
+| `(.venv)` n'apparaît pas | `source .venv/bin/activate` |
+| `uv` est introuvable | `source ~/.local/bin/env`, ou fermez et rouvrez le terminal |
+| `WSL: Ubuntu` n'apparaît pas | Vous êtes dans une fenêtre Windows : rouvrez le projet avec **Open Recent** |
+| VS Code propose d'enregistrer le workspace | Répondez **Don't Save** : ce fichier n'est pas utile ici |
+
+## Principaux choix
+
+| Choix | Raison |
+|---|---|
+| Linux via WSL2 pour le développement | Le serveur et la passerelle visent Linux, et cela évite les écarts entre Windows et la cible |
+| Python 3.11 | Même version que la CI |
+| FastAPI + Uvicorn | Serveur Web prêt pour l'interface, avec une étape de démarrage et d'arrêt pour les modules |
+| Un processus, `asyncio` et threads aux frontières | Simple à déboguer, et compatible avec une bibliothèque DNP3 à threads |
+| Simulation du réseau dans le serveur pour le MVP | Plus simple tant que le MVP tourne sur un PC |
+| Docker pour l'application réceptrice seulement | Seul le côté périphérie doit être conteneurisé |
+
+Le détail, les options écartées, les sujets encore à décider et les limites connues sont dans
+<a href="docs/serveur_derms.md">docs/serveur_derms.md</a>.
 
 ## Équipe
 

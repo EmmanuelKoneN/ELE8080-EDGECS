@@ -19,10 +19,11 @@ Restent à décider en équipe : le contrat des modules et la bibliothèque DNP3
 
 ## 2. Lancer et vérifier
 
-Depuis la racine du dépôt :
+L'installation complète, de zéro, est dans la section « Installation de zéro » du README principal.
+Ensuite, depuis la racine du dépôt, dans Ubuntu :
 
 ```bash
-pip install -r requirements.txt
+source .venv/bin/activate
 python -m derms.main
 ```
 
@@ -115,6 +116,11 @@ accessible et signale l'échec, comme le demande PF-113.
 | **Modules neutres, sans classe de base** | Laisse le choix du contrat à l'équipe | Imposer ABC ou Protocol dès maintenant |
 | **Page `/sante` lisible, JSON sur `/api/sante`** | Le JSON brut était difficile à lire ; la page n'utilise aucune ressource externe (G-002) | JSON seul |
 | **Cible : hôte Linux, MVP sur PC** | PH-141. Le Raspberry Pi n'est plus considéré pour l'instant | Déploiement sur Raspberry Pi |
+| **Développement dans Ubuntu avec WSL2** | Même type de système que la cible, sans machine dédiée ; `dnp3-python` n'existe que pour Linux | Rester sous Windows jusqu'au DNP3 ; machine virtuelle complète ; double démarrage |
+| **Dépôt cloné dans le dossier Linux, une seule copie de travail** | Accès aux fichiers plus rapides qu'avec `/mnt/c/` ; évite de mélanger les modifications | Copie sur le disque Windows |
+| **Python 3.11 installé par `uv` dans `.venv`** | Même version que la CI, sans toucher au Python d'Ubuntu (3.12) | Python d'Ubuntu ; installation dans le système |
+| **VS Code reste sous Windows, avec l'extension WSL** | Une seule fenêtre, connectée à Ubuntu | Interface graphique Linux ; deux fenêtres, une par système |
+| **Docker pour l'application réceptrice seulement** | La proposition d'Eaton n'exige la conteneurisation que côté périphérie | Conteneuriser aussi le DERMS, ce qui reste possible plus tard pour G-014 |
 
 Le README principal mentionne encore les Raspberry Pi pour la version finale. Il sera à ajuster si
 cet abandon est confirmé.
@@ -192,22 +198,23 @@ Le code de chaque volet va dans `derms/<module>/module_<module>.py`. Pour l'inst
 
 ## 8. Vérifications
 
-Essais manuels du 2026-10-30, avec Python 3.14, FastAPI 0.162 et Uvicorn 0.54. Aucun test automatisé
-n'existe encore, car le projet n'a pas de framework de test.
+Essais manuels du 2026-10-30, d'abord sous Windows avec Python 3.14, puis sous Ubuntu 24.04 (WSL2)
+avec Python 3.11.18. Aucun test automatisé n'existe encore, car le projet n'a pas de framework de
+test.
 
 | Essai | Résultat |
 |---|---|
-| Démarrage réel : 7 modules dans l'ordre, `/api/sante` à `ok` | Réussi |
-| Arrêt : modules arrêtés dans l'ordre inverse | Réussi, y compris par Ctrl+C au clavier |
-| Module qui plante au démarrage : `en_echec`, les autres démarrent, statut `degrade` | Réussi |
-| Module qui plante à l'arrêt : `en_echec`, les autres s'arrêtent | Réussi |
-| Contenu de `/sante`, avec et sans module en panne | Réussi |
-| `ruff format` et `ruff check` | Réussi |
+| Démarrage réel : 7 modules, `/api/sante` à `ok`, `/sante` à 7 sur 7 | Réussi sous Windows et Ubuntu |
+| Arrêt : les 7 modules s'arrêtent, code de sortie 0 sous Ubuntu | Réussi, y compris par Ctrl+C au clavier sous Windows |
+| Installation de `requirements.txt` et `requirements-dev.txt` | Réussie sous Ubuntu |
+| Module qui plante au démarrage : `en_echec`, les autres démarrent, statut `degrade` | Réussi sous Windows |
+| Module qui plante à l'arrêt : `en_echec`, les autres s'arrêtent | Réussi sous Windows |
+| Contenu de `/sante`, avec et sans module en panne | Réussi sous Windows |
+| `ruff format` et `ruff check` | Réussi sous Ubuntu |
 | `doxygen Doxyfile` : `doxygen/avertissements.txt` vide | Réussi avec Doxygen 1.18 |
 
 | Non vérifié | Raison |
 |---|---|
-| Doxygen de la CI | Réussi localement avec Doxygen 1.18 ; la version de la CI peut différer, à confirmer avec une pull request |
-| Exécution sous Python 3.11 | Version absente du poste utilisé ; Ruff vise bien 3.11 |
-| Exécution sous Linux | Essais faits sous Windows, alors que la cible est un hôte Linux (PH-141) |
-| Installation de `requirements.txt` | Essais faits avec FastAPI et Uvicorn seulement |
+| Doxygen de la CI | La version de la CI peut différer de la 1.18 ; à confirmer avec une pull request |
+| Injection de pannes sous Ubuntu | Faite sous Windows seulement |
+| Serveur sur un hôte Linux dédié | WSL2 sert au développement ; PH-141 reste à démontrer sur l'hôte final |
