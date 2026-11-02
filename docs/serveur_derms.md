@@ -120,7 +120,7 @@ accessible et signale l'échec, comme le demande PF-113.
 | **Dépôt cloné dans le dossier Linux, une seule copie de travail** | Accès aux fichiers plus rapides qu'avec `/mnt/c/` ; évite de mélanger les modifications | Copie sur le disque Windows |
 | **Python 3.11 installé par `uv` dans `.venv`** | Même version que la CI, sans toucher au Python d'Ubuntu (3.12) | Python d'Ubuntu ; installation dans le système |
 | **VS Code reste sous Windows, avec l'extension WSL** | Une seule fenêtre, connectée à Ubuntu | Interface graphique Linux ; deux fenêtres, une par système |
-| **Docker pour l'application réceptrice seulement** | La proposition d'Eaton n'exige la conteneurisation que côté périphérie | Conteneuriser aussi le DERMS, ce qui reste possible plus tard pour G-014 |
+| **Docker pour tout le système : une image DERMS, une image passerelle, orchestrées par `compose.yaml` ; 1 DERMS et 1 passerelle pour l'instant** (2026-11-02) | Répond à l'exigence du client sur l'application réceptrice ; une commande lance le système ; le réseau Docker imite les machines séparées de la version finale et chaque image ne contient que son côté | Application réceptrice seule dans Docker (canal à concevoir avec l'outstation) ; passerelles seules dans Docker, DERMS lancé à la main |
 
 Le README principal mentionne encore les Raspberry Pi pour la version finale. Il sera à ajuster si
 cet abandon est confirmé.

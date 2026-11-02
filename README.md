@@ -62,13 +62,55 @@ Diagramme de référence : [assets/EDGECS_architecture.drawio](assets/EDGECS_arc
 
 > **TODO** : préciser l'adressage IP de la version finale.
 
+### Docker
+
+Chaque programme peut tourner dans un **conteneur** Docker : un environnement isolé qui contient déjà
+Python 3.11 et les dépendances. Le client exige que l'application réceptrice soit conteneurisée ;
+l'équipe conteneurise tout le système pour le lancer d'une seule commande.
+
+```
+PC de développement (Ubuntu dans WSL2)
+
+  navigateur ──▶ http://127.0.0.1:8000/
+                        │
+┌───────────────────────▼──── réseau Docker « dnp3 » ────────────────────┐
+│                                                                        │
+│               ┌──────────────────────────────┐                         │
+│               │  conteneur derms             │  image edgecs-derms     │
+│               └──────────────┬───────────────┘                         │
+│                              │ DNP3                                    │
+│               ┌──────────────▼───────────────┐                         │
+│               │  conteneur passerelle1       │  image edgecs-gateway   │
+│               │  port 20000                  │                         │
+│               └──────────────────────────────┘                         │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Deux images** : `edgecs-derms` (construite par `derms/Dockerfile`) et `edgecs-gateway`
+  (construite par `gateway/Dockerfile`). Chacune ne contient que son côté du système et
+  `points_dnp3.yaml` : le DERMS et les passerelles ne partagent aucun code.
+- **Deux conteneurs** lancés par `compose.yaml` : un DERMS et une passerelle, comme dans le MVP.
+  Les passerelles 2 et 3 de la version finale viendront de la même image, comme trois boîtiers
+  identiques : il suffira de copier le service `passerelle1` dans `compose.yaml`.
+- **Un réseau virtuel** `dnp3` joue le rôle du switch Ethernet de la version finale : chaque
+  conteneur y a sa propre adresse et se joint par son nom (`passerelle1`...).
+- Seule l'interface du DERMS est accessible depuis le PC, sur `http://127.0.0.1:8000/`.
+- Chaque membre de l'équipe obtient le même environnement, quelle que soit sa machine, et le site
+  final, sans Internet, recevra les images toutes construites.
+
+Le lancement sans Docker (ci-dessous) reste le moyen le plus simple de déboguer un seul programme.
+Le tutoriel et les règles d'équipe sont dans « Lancer le système dans Docker » de
+<a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.
+
 ## Technologies
 
 - **Python 3.11** (langage principal), avec un environnement virtuel géré par **uv**
 - **FastAPI + Uvicorn** pour le serveur Web du DERMS
 - **WSL2 + Ubuntu 24.04** comme environnement Linux de développement sous Windows
 - **DNP3** : bibliothèque de communication
-- **Docker** pour l'application réceptrice (exigence du client)
+- **Docker** et **Docker Compose** pour lancer le DERMS et les passerelles dans des conteneurs
+  (l'application réceptrice conteneurisée est une exigence du client)
 
 > **TODO** : indiquer la bibliothèque DNP3 retenue (pas encore choisie).
 
@@ -87,6 +129,7 @@ Diagramme de référence : [assets/EDGECS_architecture.drawio](assets/EDGECS_arc
 | `points_dnp3.yaml` | Liste des points DNP3 partagée par les deux côtés (le « contrat » entre DERMS et gateway) |
 | `docs/` | Documentation de conception, dont le fonctionnement du serveur DERMS et ses décisions |
 | `assets/` | Diagramme d'architecture |
+| `compose.yaml` | Lancement du système complet dans Docker (`derms/Dockerfile`, `gateway/Dockerfile`) |
 | `requirements.txt` | Dépendances Python |
 | `requirements-dev.txt` | Outils de développement et d'analyse |
 | `CONTRIBUTING.md` | Standard de programmation, règles d'équipe, outils et tutoriels |
@@ -112,6 +155,8 @@ python -m derms.main
 ```
 
 Pour une 2e ou 3e passerelle : `python -m gateway.main 20001`, `python -m gateway.main 20002`.
+Pour lancer tout le système d'une commande, dans Docker : `docker compose up --build` (voir la
+section « Docker » plus haut).
 La configuration **DERMS** de « Exécuter et déboguer » (F5) fonctionne aussi. N'utilisez pas le
 bouton ▶ : il lance le fichier seul, et Python ne trouve plus le paquet `derms`.
 
@@ -135,7 +180,7 @@ modules du DERMS confirment seulement leur démarrage. Aucun échange DNP3 n'a e
 | FastAPI + Uvicorn | Serveur Web prêt pour l'interface, avec une étape de démarrage et d'arrêt pour les modules |
 | Un processus, `asyncio` et threads aux frontières | Simple à déboguer, et compatible avec une bibliothèque DNP3 à threads |
 | Simulation du réseau dans le serveur pour le MVP | Plus simple tant que le MVP tourne sur un PC |
-| Docker pour l'application réceptrice seulement | Seul le côté périphérie doit être conteneurisé |
+| Docker pour tout le système (1 DERMS et 1 passerelle pour l'instant) | Le client exige l'application réceptrice dans Docker ; une seule commande lance le système, et le réseau Docker imite l'Ethernet final |
 
 Le détail, les options écartées, les sujets encore à décider et les limites connues sont dans
 <a href="docs/serveur_derms.md">docs/serveur_derms.md</a>.
