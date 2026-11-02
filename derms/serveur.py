@@ -1,6 +1,8 @@
 """!
 @file serveur.py
 @brief Application Web du DERMS et supervision du cycle de vie de ses modules.
+@details Le serveur ne fournit que des données JSON sous /api. L'interface opérateur est faite de
+fichiers fixes qui lisent cette API depuis le navigateur.
 @author Équipe EDGECS
 @date 2026-10-30
 @note Répond à F-144. Le contrat des modules n'est pas encore décidé par l'équipe : un module est
@@ -10,26 +12,26 @@ pour l'instant tout objet qui offre name, start() et stop().
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Final
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 from derms.configuration.module_configuration import ConfigurationModule
 from derms.dnp3_master.module_dnp3_master import Dnp3MasterModule
 from derms.etat_module import ModuleState
 from derms.initialisation.module_initialisation import InitialisationModule
 from derms.interface_ui.module_interface_ui import InterfaceUiModule
-from derms.interface_ui.page_sante import render_health_page
 from derms.planification.module_planification import PlanificationModule
 from derms.simulation_pcc.module_simulation_pcc import SimulationPccModule
 from derms.stockage.module_stockage import StockageModule
 
-## Chemin de la page Web qui indique l'état du serveur.
-HEALTH_PAGE_PATH: Final[str] = "/sante"
-
 ## Chemin de l'API qui indique l'état du serveur en JSON.
 HEALTH_API_PATH: Final[str] = "/api/sante"
+
+## Dossier des fichiers fixes (HTML, CSS, JS) de l'interface opérateur, servis sur « / ».
+INTERFACE_DIR: Final[Path] = Path(__file__).parent / "interface_ui" / "static"
 
 _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
@@ -135,15 +137,6 @@ async def read_health(request: Request) -> dict[str, Any]:
     return {"statut": "ok" if is_healthy else "degrade", "modules": states}
 
 
-async def read_health_page(request: Request) -> str:
-    """!
-    @brief Présente l'état des modules dans une page Web lisible.
-    @param[in] request Requête reçue, qui donne accès au superviseur.
-    @return Le document HTML de la page.
-    """
-    return render_health_page(request.app.state.supervisor.states)
-
-
 def create_app(modules: list[Any]) -> FastAPI:
     """!
     @brief Crée l'application Web du DERMS.
@@ -153,5 +146,6 @@ def create_app(modules: list[Any]) -> FastAPI:
     app = FastAPI(title="DERMS EDGECS", lifespan=lifespan)
     app.state.supervisor = ModuleSupervisor(modules)
     app.add_api_route(HEALTH_API_PATH, read_health)
-    app.add_api_route(HEALTH_PAGE_PATH, read_health_page, response_class=HTMLResponse)
+    # Monté en dernier : « / » intercepterait sinon les routes de l'API.
+    app.mount("/", StaticFiles(directory=INTERFACE_DIR, html=True), name="interface")
     return app

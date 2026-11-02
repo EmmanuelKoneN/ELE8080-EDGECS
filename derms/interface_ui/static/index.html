@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  Interface opérateur du DERMS.
+  Page fixe : les données viennent de l'API JSON du serveur (/api/...), lue par app.js.
+  Aucune ressource externe : la page fonctionne sans Internet (G-002).
+-->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DERMS EDGECS</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <h1>État du serveur DERMS</h1>
+    <p id="resume" class="neutre">Chargement…</p>
+    <table>
+      <thead>
+        <tr><th>Module</th><th>État</th></tr>
+      </thead>
+      <tbody id="modules"></tbody>
+    </table>
+    <p id="mise-a-jour" class="neutre"></p>
+  </body>
+</html>

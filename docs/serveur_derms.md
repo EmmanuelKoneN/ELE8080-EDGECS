@@ -13,7 +13,7 @@ jusqu'à Ctrl+C. **Les modules sont encore vides** : ils confirment seulement le
 | Serveur Web actif en continu | Logique réelle des modules |
 | Démarrage et arrêt ordonnés des 7 modules | Liaison DNP3 avec les passerelles |
 | Suivi de l'état de chaque module | Lecture d'un fichier de configuration |
-| Page d'état `/sante` et API `/api/sante` | Stockage et journal des événements sur disque |
+| API JSON `/api/sante` et page opérateur qui la lit | Stockage et journal des événements sur disque |
 
 Restent à décider en équipe : le contrat des modules et la bibliothèque DNP3 (section 5).
 
@@ -29,8 +29,8 @@ python -m derms.main
 
 | Adresse | Contenu |
 |---|---|
-| `http://127.0.0.1:8000/sante` | Page lisible : nombre de modules démarrés et état de chacun |
-| `http://127.0.0.1:8000/api/sante` | Même information en JSON, pour les scripts et les essais |
+| `http://127.0.0.1:8000/` | Interface opérateur : état de chaque module, mis à jour toutes les 2 s |
+| `http://127.0.0.1:8000/api/sante` | Même information en JSON, lue par l'interface, les scripts et les essais |
 
 Ctrl+C arrête le serveur. La réponse HTTP est 200 même si un module est en échec : le statut se lit
 dans le contenu (`ok` ou `degrade`).
@@ -40,7 +40,7 @@ dans le contenu (`ok` ou `degrade`).
 ### Vue d'ensemble
 
 ```
-Navigateur ──HTTP──▶ Uvicorn ──ASGI──▶ FastAPI ──▶ ModuleSupervisor
+Navigateur (index.html, app.js) ──HTTP + JSON──▶ Uvicorn ──ASGI──▶ FastAPI ──▶ ModuleSupervisor
                                                      │ start() / stop()
              ┌───────────┬──────────────┬────────────┼──────────────┬───────────────┬───────────┐
        configuration  stockage  initialisation  dnp3_master  simulation_pcc  planification  interface_ui
@@ -53,7 +53,7 @@ Tout tourne dans **un seul processus Python**, autour d'une boucle `asyncio`.
 | `derms/main.py` | Point d'entrée : configure le journal et lance Uvicorn |
 | `derms/serveur.py` | Application FastAPI, superviseur des modules, liste des modules |
 | `derms/etat_module.py` | États possibles d'un module |
-| `derms/interface_ui/page_sante.py` | Construction de la page `/sante` |
+| `derms/interface_ui/static/` | Interface opérateur : fichiers fixes HTML, CSS et JS qui lisent l'API |
 | `derms/<module>/module_<module>.py` | Classe de chaque module |
 
 ### Démarrage et arrêt
@@ -85,14 +85,14 @@ avec son horodatage.
 
 Pour l'instant, **aucun module n'arrête le serveur**. Une exception pendant `start()` fait passer le
 module à `en_echec`, écrit l'erreur au journal, et les modules suivants démarrent quand même. Une
-exception pendant `stop()` n'empêche pas l'arrêt des autres modules. La page `/sante` reste
+exception pendant `stop()` n'empêche pas l'arrêt des autres modules. L'interface opérateur reste
 accessible et signale l'échec, comme le demande PF-113.
 
 ## 4. Protocoles
 
 | Liaison | Protocole | État | Détails |
 |---|---|---|---|
-| Navigateur → serveur | HTTP | En place | Port 8000, sans chiffrement, sur `127.0.0.1` seulement |
+| Navigateur → serveur | HTTP | En place | Port 8000, sans chiffrement, sur `127.0.0.1` seulement. Fichiers fixes sur `/`, données JSON sous `/api/` |
 | Uvicorn → FastAPI | ASGI | En place | Interface Python interne, pas un protocole réseau |
 | Scripts → serveur | HTTP + JSON | En place | `/api/sante` |
 | Entre modules | Appels Python | Prévu | Aucun protocole réseau : même processus, sans échange pour l'instant |
@@ -114,7 +114,7 @@ accessible et signale l'échec, comme le demande PF-113.
 | **Aucun module n'arrête le serveur pour l'instant** | Le Web doit rester accessible en cas de panne (PF-113) ; suffisant tant que les modules sont vides | Arrêt complet au premier échec |
 | **Aucune infrastructure DNP3 pour l'instant** | Le choix se fera avec le volet Communication | Intégrer une bibliothèque dès le squelette |
 | **Modules neutres, sans classe de base** | Laisse le choix du contrat à l'équipe | Imposer ABC ou Protocol dès maintenant |
-| **Page `/sante` lisible, JSON sur `/api/sante`** | Le JSON brut était difficile à lire ; la page n'utilise aucune ressource externe (G-002) | JSON seul |
+| **Le serveur ne fournit que du JSON (`/api/...`) ; l'interface est faite de fichiers fixes HTML, CSS et JS qui lisent l'API toutes les 2 s** | Sépare les données de l'affichage : l'interface peut évoluer (DER, réseau, courbes) sans toucher au serveur, et les scripts utilisent la même API. Aucune compilation ni installation (G-014), aucune ressource externe (G-002). Le statut global n'est calculé qu'une fois, par le serveur. Passage au SSE possible sans changer le JSON | Page HTML construite en Python (logique en double, page figée) ; React, Vue ou Svelte (Node et compilation, disproportionné pour 3 DER) ; NiceGUI, Streamlit, Dash (mêlent affichage et serveur) ; htmx (le serveur renvoie du HTML) |
 | **Cible : hôte Linux, MVP sur PC** | PH-141. Le Raspberry Pi n'est plus considéré pour l'instant | Déploiement sur Raspberry Pi |
 | **Développement dans Ubuntu avec WSL2** | Même type de système que la cible, sans machine dédiée ; `dnp3-python` n'existe que pour Linux | Rester sous Windows jusqu'au DNP3 ; machine virtuelle complète ; double démarrage |
 | **Dépôt cloné dans le dossier Linux, une seule copie de travail** | Accès aux fichiers plus rapides qu'avec `/mnt/c/` ; évite de mélanger les modifications | Copie sur le disque Windows |
@@ -204,17 +204,19 @@ test.
 
 | Essai | Résultat |
 |---|---|
-| Démarrage réel : 7 modules, `/api/sante` à `ok`, `/sante` à 7 sur 7 | Réussi sous Windows et Ubuntu |
+| Démarrage réel : 7 modules, `/api/sante` à `ok` | Réussi sous Windows et Ubuntu |
+| `/`, `app.js` et `style.css` servis (200) ; `/sante` retiré (404) | Réussi sous Ubuntu le 2026-11-02 |
 | Arrêt : les 7 modules s'arrêtent, code de sortie 0 sous Ubuntu | Réussi, y compris par Ctrl+C au clavier sous Windows |
 | Installation de `requirements.txt` et `requirements-dev.txt` | Réussie sous Ubuntu |
 | Module qui plante au démarrage : `en_echec`, les autres démarrent, statut `degrade` | Réussi sous Windows |
 | Module qui plante à l'arrêt : `en_echec`, les autres s'arrêtent | Réussi sous Windows |
-| Contenu de `/sante`, avec et sans module en panne | Réussi sous Windows |
+| `/api/sante` à `degrade` avec un module en panne | Réussi sous Ubuntu le 2026-11-02 |
 | `ruff format` et `ruff check` | Réussi sous Ubuntu |
 | `doxygen Doxyfile` : `doxygen/avertissements.txt` vide | Réussi avec Doxygen 1.18 |
 
 | Non vérifié | Raison |
 |---|---|
+| Affichage de l'interface dans un navigateur (`app.js`) | Aucun navigateur ni Node dans l'environnement de l'essai du 2026-11-02 ; à vérifier à la main |
 | Doxygen de la CI | La version de la CI peut différer de la 1.18 ; à confirmer avec une pull request |
 | Injection de pannes sous Ubuntu | Faite sous Windows seulement |
 | Serveur sur un hôte Linux dédié | WSL2 sert au développement ; PH-141 reste à démontrer sur l'hôte final |

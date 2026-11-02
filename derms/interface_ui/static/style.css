@@ -1,0 +1,44 @@
+/* Style de l'interface opérateur du DERMS. */
+:root {
+  color-scheme: light dark;
+  --ok: #1a7f37;
+  --alerte: #cf222e;
+  --neutre: #6e7781;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 32rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--neutre);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+/* Les classes reprennent les valeurs envoyées par l'API (ModuleState, statut global). */
+.demarre,
+.ok {
+  color: var(--ok);
+}
+
+.en_echec,
+.degrade,
+.injoignable {
+  color: var(--alerte);
+}
+
+.non_demarre,
+.arrete,
+.neutre {
+  color: var(--neutre);
+}

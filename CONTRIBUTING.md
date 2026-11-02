@@ -410,8 +410,8 @@ Dans le terminal de VS Code :
 python -m derms.main
 ```
 
-Ouvrez `http://127.0.0.1:8000/sante` dans votre navigateur : la page doit afficher
-**7 modules démarrés sur 7**. Ctrl+C arrête le serveur.
+Ouvrez `http://127.0.0.1:8000/` dans votre navigateur : la page doit afficher
+**Tous les modules sont démarrés**. Ctrl+C arrête le serveur.
 
 Vérifiez aussi votre connexion GitHub avec `git push` depuis une branche de travail : le résultat
 attendu est `Everything up-to-date`. Une fenêtre de connexion peut s'ouvrir la première fois.

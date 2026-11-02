@@ -1,10 +1,11 @@
 {
     "editor.formatOnSave": true,
-    "editor.rulers": [100],
+    "editor.rulers": [
+        100
+    ],
     "files.eol": "\n",
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
-
     "files.exclude": {
         "**/__pycache__": true,
         "**/.ruff_cache": true
@@ -15,7 +16,6 @@
         "README.md": "CONTRIBUTING.md, CLAUDE.md",
         "pyproject.toml": "requirements*.txt, Doxyfile, .clang-format, .gitattributes, .gitignore"
     },
-
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.codeActionsOnSave": {
@@ -24,10 +24,13 @@
         }
     },
     "ruff.importStrategy": "fromEnvironment",
-
-    "[cpp]": { "editor.defaultFormatter": "xaver.clang-format" },
-    "[c]": { "editor.defaultFormatter": "xaver.clang-format" },
-
+    "[cpp]": {
+        "editor.defaultFormatter": "xaver.clang-format"
+    },
+    "[c]": {
+        "editor.defaultFormatter": "xaver.clang-format"
+    },
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "python-envs.defaultEnvManager": "ms-python.python:venv"
 }

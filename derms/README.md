@@ -36,9 +36,11 @@ l'ordre suivant, et les arrête dans l'ordre inverse :
 Pour l'instant, chaque module confirme seulement son démarrage. L'échec d'un module n'arrête pas le
 serveur : le module passe à l'état `en_echec`, et les autres continuent de démarrer.
 
-`http://127.0.0.1:8000/sante` présente l'état de chaque module dans une page lisible.
-`http://127.0.0.1:8000/api/sante` donne la même information en JSON, avec le statut global `ok` ou
-`degrade`.
+Le serveur ne fournit que des données JSON, sous `/api/`. `http://127.0.0.1:8000/api/sante` donne
+l'état de chaque module, avec le statut global `ok` ou `degrade`.
+
+`http://127.0.0.1:8000/` ouvre l'interface opérateur : des fichiers fixes (`interface_ui/static/`)
+qui lisent l'API toutes les 2 s depuis le navigateur.
 
 Un module est pour l'instant un objet qui offre `name`, `async start()` et `async stop()`. Le contrat
 définitif reste à choisir par l'équipe.
