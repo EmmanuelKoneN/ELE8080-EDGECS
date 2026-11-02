@@ -1,0 +1,14 @@
+# Fichiers exclus des images Docker : seuls le code, requirements.txt et points_dnp3.yaml y entrent.
+.git/
+.github/
+.vscode/
+.venv/
+**/__pycache__/
+.ruff_cache/
+doxygen/
+assets/
+docs/
+**/*.md
+**/Dockerfile
+compose.yaml
+.dockerignore

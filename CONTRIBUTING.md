@@ -317,6 +317,7 @@ Python 3.11 :
 | Standard de programmation | `ruff check .` |
 | Formatage C/C++ | `clang-format --dry-run --Werror` sur les fichiers C/C++ |
 | Documentation | `doxygen Doxyfile` |
+| Images Docker | `docker compose build` |
 
 La vérification de la documentation échoue si `doxygen/avertissements.txt` n'est pas vide. La
 documentation générée est conservée comme artefact `documentation-doxygen`.
@@ -328,6 +329,7 @@ documentation générée est conservée comme artefact `documentation-doxygen`.
 - Installer l'environnement : voir « Installation de zéro » ci-dessous.
 - Générer la documentation : voir « Générer la documentation » à la section 4.
 - Contribuer une modification : voir « Flux de travail » à la section 5.
+- Lancer tout le système d'une commande : voir « Lancer le système dans Docker » ci-dessous.
 
 > **TODO** : ajouter les tutoriels manquants à mesure que le code se précise.
 
@@ -419,5 +421,84 @@ attendu est `Everything up-to-date`. Une fenêtre de connexion peut s'ouvrir la 
 #### Outils facultatifs
 
 - **Doxygen** : `sudo apt install doxygen`, pour vérifier la documentation avant une pull request.
-- **Docker** : pour la passerelle, activez Ubuntu dans Docker Desktop, sous
-  **Settings → Resources → WSL Integration**.
+- **Docker** : pour lancer le système dans des conteneurs, voir le tutoriel ci-dessous.
+
+### Lancer le système dans Docker
+
+Docker lance chaque programme dans un **conteneur** : un environnement isolé qui contient déjà
+Python 3.11 et les dépendances. Il n'y a ni `.venv` à activer ni terminal à ouvrir par programme.
+
+| Fichier | Rôle |
+|---|---|
+| `derms/Dockerfile` | Recette de l'image du DERMS (sans `gateway/`) |
+| `gateway/Dockerfile` | Recette de l'image d'une passerelle (sans `derms/`) |
+| `compose.yaml` | Lance 1 DERMS et 1 passerelle sur un réseau virtuel nommé `dnp3` |
+| `.dockerignore` | Fichiers exclus des images (`.venv`, `.git`, documentation...) |
+
+#### 1. Installer Docker dans Ubuntu
+
+Docker Desktop sous Windows convient, avec Ubuntu activé sous
+**Settings → Resources → WSL Integration**. Sans Docker Desktop, installez Docker Engine dans
+Ubuntu :
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER   # utiliser docker sans sudo ; fermer et rouvrir le terminal
+```
+
+`docker compose version` doit afficher une version.
+
+#### 2. Lancer et arrêter
+
+À la racine du dépôt :
+
+```bash
+docker compose up --build   # construire les images et tout lancer ; Ctrl+C pour arrêter
+docker compose down         # supprimer les conteneurs arrêtés
+```
+
+L'interface opérateur est sur `http://127.0.0.1:8000/`. `--build` reconstruit les images après une
+modification du code : sans lui, Docker relance l'ancienne version.
+
+Pour l'instant, la passerelle affiche « à implémenter » puis s'arrête (`exited (0)`) :
+c'est normal tant que l'outstation DNP3 n'existe pas.
+
+#### 3. Commandes utiles
+
+| Besoin | Commande |
+|---|---|
+| Lancer en arrière-plan | `docker compose up --build -d` |
+| Voir l'état des conteneurs | `docker compose ps -a` |
+| Lire le journal d'un conteneur | `docker compose logs -f derms` |
+| Ouvrir un terminal dans un conteneur | `docker compose exec derms bash` |
+| Lancer seulement le DERMS | `docker compose up --build derms` |
+
+#### Règles d'équipe
+
+Les images se construisent à partir du dépôt : chacun obtient le même environnement, à condition de
+garder les Dockerfiles à jour avec le code.
+
+| Vous... | Faites aussi... |
+|---|---|
+| ajoutez une bibliothèque Python | l'ajouter à `requirements.txt` : les deux images l'installent |
+| ajoutez un fichier hors de `derms/` ou `gateway/` dont le programme a besoin | l'ajouter par `COPY` au Dockerfile concerné, et vérifier qu'il n'est pas exclu par `.dockerignore` |
+| ajoutez une adresse ou un port réseau | le rendre remplaçable par une variable `EDGECS_...`, comme `EDGECS_LISTEN_ADDRESS` dans `gateway/main.py`, puis la régler dans le Dockerfile ou `compose.yaml` |
+| ajoutez un module qui écrit sur disque | prévoir un volume dans `compose.yaml`, sinon les fichiers disparaissent avec le conteneur |
+| modifiez un Dockerfile ou `compose.yaml` | lancer `docker compose up --build` avant d'ouvrir la PR |
+
+La CI construit les images à chaque pull request : elle échoue si `docker compose build` échoue. Après un `git pull`, relancez avec `--build` pour que vos
+conteneurs prennent le code de vos camarades.
+
+#### Différences avec le lancement sans Docker
+
+- Dans un conteneur, `127.0.0.1` désigne le conteneur lui-même. Les programmes y écoutent donc sur
+  `0.0.0.0`, grâce aux variables `EDGECS_WEB_ADDRESS` et `EDGECS_LISTEN_ADDRESS` définies dans les
+  Dockerfiles. Sans ces variables, ils gardent `127.0.0.1`.
+- Le DERMS joint une passerelle par son nom de service (`passerelle1`), donné par
+  `EDGECS_GATEWAY_ADDRESS` dans `compose.yaml`.
+- Les passerelles ne sont pas accessibles depuis le PC : seul le DERMS les joint, par le réseau
+  `dnp3`.
+- Les fichiers écrits dans un conteneur disparaissent avec lui. Le stockage et les journaux devront
+  utiliser un volume quand ils écriront sur disque.
+- Le site final n'a pas d'accès à Internet : les images y seront apportées toutes construites, avec
+  `docker save` puis `docker load`.

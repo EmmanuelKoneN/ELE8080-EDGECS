@@ -16,6 +16,8 @@ Pour la vue d'ensemble du système, voir le [README principal](../README.md).
 | `simulation_pcc/` | Réseau simulé : fournit la puissance au point de couplage commun (PCC) |
 
 **Lancer :** depuis la racine du dépôt, `python -m derms.main`. Ctrl+C arrête le serveur.
+Dans Docker, avec les passerelles : `docker compose up --build` (image construite par
+[Dockerfile](Dockerfile)).
 
 Les décisions, les protocoles et les limites connues sont dans
 [docs/serveur_derms.md](../docs/serveur_derms.md).
@@ -74,9 +76,18 @@ La cible est définie dans `derms/main.py` :
 |---|---|---|
 | `GATEWAY_ADDRESS` | `127.0.0.1` | Adresse de la passerelle DNP3 à joindre |
 | `GATEWAY_PORT` | `20000` | Port DNP3 de la passerelle |
+| `WEB_ADDRESS` | `127.0.0.1` | Adresse d'écoute de l'interface Web |
+| `WEB_PORT` | `8000` | Port de l'interface Web |
+
+Deux variables d'environnement remplacent les adresses quand elles sont définies :
+
+| Variable | Remplace | Valeur sous Docker | Définie dans |
+|---|---|---|---|
+| `EDGECS_GATEWAY_ADDRESS` | `GATEWAY_ADDRESS` | `passerelle1` | `compose.yaml` |
+| `EDGECS_WEB_ADDRESS` | `WEB_ADDRESS` | `0.0.0.0` | `derms/Dockerfile` |
 
 Pour l'instant, `dnp3_master/` confirme seulement son démarrage : aucune liaison DNP3 n'est établie,
-et ces constantes ne sont pas encore utilisées.
+et `GATEWAY_ADDRESS`, `GATEWAY_PORT` et `EDGECS_GATEWAY_ADDRESS` ne sont pas encore utilisés.
 
 Les points DNP3 sont définis dans [points_dnp3.yaml](../points_dnp3.yaml), encore à l'état de
 brouillon. Ce fichier est le contrat avec la passerelle : voir la règle d'équipe dans
