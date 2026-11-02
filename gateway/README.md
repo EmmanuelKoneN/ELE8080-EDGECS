@@ -13,7 +13,9 @@ Pour la vue d'ensemble du système, voir le [README principal](../README.md).
 | `simulation_der/` | Modèles logiciels des DER : BESS, génératrice, etc. (section 8.4) |
 
 **Lancer :** depuis la racine du dépôt, `python -m gateway.main [port]`
-(port 20000 par défaut ; 20001 et 20002 pour les autres passerelles)
+(port 20000 par défaut ; 20001 et 20002 pour les autres passerelles).
+Dans Docker, une passerelle et le DERMS : `docker compose up --build` (image construite par
+[Dockerfile](Dockerfile)).
 
 ## Outstation DNP3
 
@@ -26,6 +28,10 @@ L'écoute est définie dans `gateway/main.py` :
 |---|---|---|
 | `LISTEN_ADDRESS` | `127.0.0.1` | Adresse d'écoute de l'outstation DNP3 |
 | `DEFAULT_PORT` | `20000` | Port DNP3 utilisé si aucun port n'est donné en argument |
+
+La variable d'environnement `EDGECS_LISTEN_ADDRESS` remplace `LISTEN_ADDRESS` quand elle est
+définie. `gateway/Dockerfile` la règle à `0.0.0.0` : dans un conteneur, `127.0.0.1` ne serait
+joignable que depuis le conteneur lui-même.
 
 Pour l'instant, `gateway/main.py` affiche seulement « à implémenter ».
 
@@ -40,9 +46,9 @@ brouillon. Ce fichier est le contrat avec le DERMS : voir la règle d'équipe da
 ## Application réceptrice
 
 Le module `app_receptrice/` interprète les commandes reçues et les achemine vers la bonne DER
-(section 8.3). Elle doit tourner dans un conteneur Docker (exigence du client).
-
-> **TODO** : ajouter le Dockerfile et documenter la construction et le lancement du conteneur.
+(section 8.3). Elle doit tourner dans un conteneur Docker (exigence du client) : toute la passerelle
+est conteneurisée par `gateway/Dockerfile`. Le lancement est décrit dans « Lancer le système dans
+Docker » de [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Modèles DER
 

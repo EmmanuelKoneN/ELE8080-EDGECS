@@ -6,11 +6,15 @@
 @note Lancer depuis la racine du dépôt : python -m gateway.main [port]
 """
 
+import os
 import sys
 from typing import Final
 
-## Adresse d'écoute de l'outstation DNP3.
+## Adresse d'écoute de l'outstation DNP3 si LISTEN_ADDRESS_VARIABLE n'est pas définie.
 LISTEN_ADDRESS: Final[str] = "127.0.0.1"
+
+## Variable d'environnement qui remplace LISTEN_ADDRESS (0.0.0.0 sous Docker).
+LISTEN_ADDRESS_VARIABLE: Final[str] = "EDGECS_LISTEN_ADDRESS"
 
 ## Port DNP3 utilisé si aucun port n'est donné en argument.
 DEFAULT_PORT: Final[int] = 20000
@@ -36,8 +40,9 @@ def main() -> None:
     """!
     @brief Démarre la passerelle et attend les commandes du DERMS.
     """
+    listen_address = os.environ.get(LISTEN_ADDRESS_VARIABLE, LISTEN_ADDRESS)
     port = read_port(sys.argv)
-    print(f"Gateway : écoute DNP3 sur {LISTEN_ADDRESS}:{port} (à implémenter)")
+    print(f"Gateway : écoute DNP3 sur {listen_address}:{port} (à implémenter)")
 
 
 if __name__ == "__main__":

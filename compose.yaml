@@ -1,0 +1,33 @@
+# Système EDGECS sur un seul PC : 1 DERMS et 1 passerelle, chacun dans son conteneur.
+# Le réseau « dnp3 » joue le rôle de l'Ethernet qui reliera les machines de la version finale :
+# chaque conteneur y a sa propre adresse et se joint par son nom (passerelle1).
+# Pour ajouter une passerelle : copier le service passerelle1 en passerelle2, avec le port 20001.
+#
+#   docker compose up --build   # construire les images et tout lancer (Ctrl+C pour arrêter)
+#   docker compose down         # supprimer les conteneurs
+
+services:
+  derms:
+    build:
+      context: .
+      dockerfile: derms/Dockerfile
+    image: edgecs-derms
+    environment:
+      # Lu par le futur client DNP3.
+      EDGECS_GATEWAY_ADDRESS: passerelle1
+    ports:
+      # Interface opérateur sur http://127.0.0.1:8000/, accessible depuis ce PC seulement.
+      - "127.0.0.1:8000:8000"
+    networks: [dnp3]
+
+  # La passerelle ne publie aucun port : seul le DERMS la joint, par le réseau dnp3.
+  passerelle1:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    image: edgecs-gateway
+    command: ["python", "-m", "gateway.main", "20000"]
+    networks: [dnp3]
+
+networks:
+  dnp3:
