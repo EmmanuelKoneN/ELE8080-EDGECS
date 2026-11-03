@@ -4,3 +4,5 @@ numpy>=2.0
 pandas>=2.2
 fastapi>=0.115
 uvicorn>=0.30
+# Modèle BESS d'EPRI, épinglé car en bêta (docs/simulation_der/journal_decisions.md, D-002)
+opender==2.2.0

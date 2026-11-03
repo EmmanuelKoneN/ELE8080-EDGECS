@@ -29,3 +29,6 @@ ignore = ["ANN401"]  # Any est toléré quand une API externe l'impose
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
