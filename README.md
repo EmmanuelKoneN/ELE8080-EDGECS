@@ -202,4 +202,5 @@ Membres : Chloé Truchon, Alireza Jafari, Cazy Gaspard, Flavio Zapata, Emmanuel 
 - <a href="derms/README.md">derms/README.md</a> : serveur DERMS, client DNP3 maître et simulation du réseau
 - <a href="docs/serveur_derms.md">docs/serveur_derms.md</a> : fonctionnement du serveur DERMS, protocoles et décisions
 - <a href="gateway/README.md">gateway/README.md</a> : passerelle DER, outstation DNP3 et modèles DER
+- <a href="docs/simulation_der/plan.md">docs/simulation_der/plan.md</a> : plan de la simulation des DER
 - <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> : standard de programmation, règles d'équipe et tutoriels
