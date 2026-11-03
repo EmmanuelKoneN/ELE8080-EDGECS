@@ -92,7 +92,7 @@ ders:
 ## 6. BESS : `modele_bess.py`
 
 `BessConfig.from_mapping()` valide les champs de la section 3. `BessModel(der_id, config, pas_s)`
-crée un `DER_BESS` et règle `der_file` (conversions kW→W et %→pu, noms confirmés à l'étape 0).
+crée un `DER_BESS` avec les paramètres de `der_file` listés au journal D-011 (kW→W, kWh→Wh, %→pu).
 
 **Commandes.** Les refus sont explicites, sans troncature silencieuse (journal D-004).
 - `set_active_power(p_kw)` :
@@ -106,7 +106,8 @@ crée un `DER_BESS` et règle `der_file` (conversions kW→W et %→pu, noms con
 1. La consigne effective est la consigne mémorisée, ou 0 à l'arrêt.
 2. **Garde de SOC** (journal D-005). La puissance est bornée à l'énergie disponible jusqu'à la
    limite sur un pas : `(soc − soc_min) · capacité / pas` en décharge, et l'équivalent en charge.
-   Le SOC atteint la limite sans la franchir (G-011). `Alarm.SOC_LIMIT` est active tant que la
+   Le `soc` est celui qui résultera de la puissance du pas précédent, qu'OpenDER n'intègre qu'au
+   pas suivant (journal D-011). Le SOC atteint la limite sans la franchir (G-011). `Alarm.SOC_LIMIT` est active tant que la
    garde réduit la consigne. La consigne reste acceptée.
 3. Appel de `update_der_input(v_pu=NOMINAL_VOLTAGE_PU, f=NOMINAL_FREQUENCY_HZ, p_dem_pu=…)` puis
    `run()` (journal D-006).
@@ -127,7 +128,8 @@ crée un `DER_BESS` et règle `der_file` (conversions kW→W et %→pu, noms con
   (journal D-009).
 - `stop()` annule la tâche et l'attend.
 - Le journal (`logging`) trace les commandes acceptées ou refusées avec leur raison, et les
-  changements d'alarme. Pas de journalisation périodique.
+  changements d'alarme. Pas de journalisation périodique : un filtre écarte les avertissements
+  de SOC qu'OpenDER émet à chaque pas en limite (journal D-011).
 
 ## 8. `gateway/main.py`
 
@@ -138,7 +140,7 @@ crée un `DER_BESS` et règle `der_file` (conversions kW→W et %→pu, noms con
 
 ## 9. Étapes de réalisation
 
-0. **Vérifier OpenDER sous Python 3.11 / Linux.** Ses métadonnées ne déclarent que Python 3.7 sous
+0. **Vérifier OpenDER sous Python 3.11 / Linux.** Fait, résultats au journal D-011. Ses métadonnées ne déclarent que Python 3.7 sous
    Windows. Installer `opender==2.2.0` dans `.venv` et exécuter l'exemple Ex5 (BESS, SOC). Relever :
    - les unités (W, Wh) et l'échelle de `bess_soc` ;
    - un éventuel rendement dans l'intégration du SOC ;
@@ -161,13 +163,14 @@ crée un `DER_BESS` et règle `der_file` (conversions kW→W et %→pu, noms con
 
 ## 10. Tests
 
-Ils appellent `step()` directement, sans temps réel.
+Ils appellent `step()` directement, sans temps réel. Le SOC suit la puissance avec un pas de
+retard (journal D-011).
 
 | Sujet | Cas |
 |---|---|
 | Commandes | consigne valide acceptée, P mesurée = consigne ; consigne hors limites, NaN ou envoyée à l'arrêt refusée, état inchangé ; `start`/`stop` idempotents |
-| SOC | variation = `P·pas/capacité` à la tolérance près ; charge et décharge prolongées atteignent exactement `soc_max`/`soc_min` sans les franchir ; `SOC_LIMIT` levée puis retombée quand la consigne s'inverse |
-| Arrêt | P = 0 et SOC figé |
+| SOC | variation = `P·pas/capacité` à la tolérance près ; charge et décharge prolongées atteignent exactement `soc_max`/`soc_min` sans les franchir ; `SOC_LIMIT` levée puis retombée quand la consigne s'inverse ; même chose avec `p_charge_max ≠ p_decharge_max` (défaut d'OpenDER, D-011) |
+| Arrêt | P = 0 dès le pas suivant, SOC figé à partir du second |
 | Configuration | chaque champ manquant, inconnu ou incohérent, type inconnu, identifiant absent : `ValueError` |
 | Fabrique | deux BESS dans `der.yaml` donnent deux modèles indépendants (G-001) |
 | Module | une exception injectée dans une DER donne `FAULT` pour elle seule, les autres continuent ; `stop()` se termine proprement |

@@ -128,3 +128,55 @@ Gabarit d'une entrée :
   signe visible.
 - Écartées : ignorer la DER fautive et démarrer les autres, rejeté parce que l'erreur passerait
   inaperçue.
+
+## D-011 — Étape 0 : OpenDER 2.2.0 validé sous Python 3.11 / Linux
+- Date : 2026-11-03
+- Statut : Adoptée
+- Exigences : F-403, F-404, G-011
+- Décision : `opender==2.2.0` est conservé (confirme D-002). `BessModel` crée le modèle par
+  `DER_BESS(**paramètres)`, puis appelle `der_file.initialize_NP_BESS_P_MAX_BY_SOC()`. Sinon, la
+  courbe de puissance par SOC garde les bornes 0–1 du fichier par défaut. Correspondance :
+
+  | `der.yaml` | `der_file` | Conversion |
+  |---|---|---|
+  | `p_decharge_max_kw` | `NP_P_MAX`, `NP_VA_MAX` | × 1000 (W, VA) |
+  | `p_charge_max_kw` | `NP_P_MAX_CHARGE`, `NP_APPARENT_POWER_CHARGE_MAX` | × 1000 (W, VA), positif |
+  | `capacite_kwh` | `NP_BESS_CAPACITY` | × 1000 (Wh) |
+  | `soc_min_pct`, `soc_max_pct`, `soc_initial_pct` | `NP_BESS_SOC_MIN`, `NP_BESS_SOC_MAX`, `SOC_INIT` | ÷ 100 (pu) |
+  | — | `NP_EFFICIENCY` | fixé à 1 |
+  | — | `NP_Q_MAX_INJ`, `NP_Q_MAX_ABS` | 0,44 × `NP_VA_MAX`, sinon OpenDER avertit dès que la puissance diffère des 100 kW du fichier par défaut |
+
+  Le pas se règle par `DER.t_s`. La consigne passe par `update_der_input(p_dem_kw=…)`, et la
+  mesure se lit dans `p_out_kw` et `bess_soc` (`numpy.float64`, à convertir en `float`).
+- Raison : résultats des essais (Ex5 de la v2.2 et une configuration 100 kW / 200 kWh / 10–90 %
+  au pas de 1 s) :
+  - Ex5 tourne sans modification, figure enregistrée au lieu d'affichée. Rien n'est propre à
+    Windows : les chemins passent par `pathlib`, les CSV sont inclus dans la roue.
+  - Unités : puissances en W (`p_out_w`, aussi `p_out_kw`), capacité en Wh, SOC en pu. P > 0 en
+    décharge.
+  - Rendement : `NP_EFFICIENCY` (1 par défaut) ne s'applique qu'à la charge :
+    `ΔSOC = (η·P_charge − P_décharge) / capacité · t_s / 3600`. Vérifié avec η = 0,9.
+  - Retard d'un pas : `run()` intègre le SOC avec le `p_out` du pas précédent avant de calculer le
+    nouveau. Après le pas k, `bess_soc` reflète les puissances jusqu'au pas k − 1. À l'arrêt, P
+    tombe à 0 tout de suite, et le SOC bouge encore une fois.
+  - Limite de SOC interne : exacte si `p_charge_max = p_decharge_max`. Une décharge et une charge
+    prolongées à 100 kW s'arrêtent à 0,10 et 0,90 pile. Elle est fausse sinon : la limite de charge
+    est en pu de `NP_P_MAX_CHARGE` mais comparée à une consigne en pu de `NP_P_MAX`
+    (`p_funcs_bess.py`, éq. 3.7.3-8). Avec 50 kW en charge et 100 kW en décharge, le SOC dépasse
+    0,90 et P oscille entre −40 et +40 kW : la batterie injecte alors qu'on lui demande de charger.
+    Confirme D-005.
+  - Une consigne NaN devient −100 kW (pleine charge) sans erreur. Confirme le refus de D-004.
+  - Validation laxiste : un paramètre inconnu ne donne qu'un avertissement, un `SOC_INIT` hors
+    `[0, 1]` est remplacé par 0,5, un `NP_EFFICIENCY` hors `[0, 1]` par 1. Confirme D-010.
+  - `run()` lit `self.__class__.t_s` et le calcul du SOC lit `DER.t_s`. Confirme D-007.
+  - `soc.py` écrit `logging.warning("BESS SoC reached max")` (ou `min`) sur le journal racine, à
+    chaque pas passé en limite : 23 040 messages pendant l'essai.
+  - `opender` dépend de `numpy`, `pandas` et `matplotlib`. Ce dernier n'est aujourd'hui que dans
+    `requirements-dev.txt`. Il entrera dans l'image de la passerelle comme dépendance d'`opender`.
+- Conséquences sur le plan (sections 6, 7 et 10 mises à jour) :
+  - la garde de SOC part du SOC qui résultera de la puissance du pas précédent ;
+  - le module filtre les avertissements de SOC d'OpenDER pour respecter « pas de journalisation
+    périodique » ; l'alarme `SOC_LIMIT` les remplace ;
+  - les tests tiennent compte du retard d'un pas.
+- Écartées : régler les attributs de `der_file` après la construction, rejeté parce que
+  `SOC_INIT` est lu à la création du modèle et qu'il faudrait ensuite appeler `reset_soc()`.
