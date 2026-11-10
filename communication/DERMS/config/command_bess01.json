@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "device_id": "bess-01",
+  "point": "power_setpoint_kw",
+  "value": 15.0,
+  "kind": "command",
+  "request_id": "commande-001",
+  "timestamp": "2026-10-27T18:00:00Z"
+}

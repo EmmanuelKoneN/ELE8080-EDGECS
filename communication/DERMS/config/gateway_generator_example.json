@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "device_id": "generator-01",
+  "name": "Generatrice simulee laboratoire EDGECS",
+  "der_type": "GENERATOR",
+  "dnp3": {
+    "host": "127.0.0.1",
+    "port": 20002,
+    "master_address": 1,
+    "outstation_address": 11
+  },
+  "mqtt": {
+    "host": "127.0.0.1",
+    "port": 1883
+  },
+  "master_api_host": "127.0.0.1",
+  "master_api_port": 8443,
+  "points": [
+    {
+      "name": "frequency_setpoint_hz",
+      "alias": "frequency",
+      "direction": "command",
+      "dnp3_type": "AO",
+      "index": 3,
+      "unit": "Hz",
+      "min": 55.0,
+      "max": 65.0,
+      "feedback_point": "measured_frequency_hz"
+    },
+    {
+      "name": "start_generator",
+      "alias": "start",
+      "direction": "command",
+      "dnp3_type": "BO",
+      "index": 1,
+      "unit": "bool",
+      "feedback_point": "generator_running"
+    },
+    {
+      "name": "measured_frequency_hz",
+      "alias": "freq",
+      "direction": "telemetry",
+      "dnp3_type": "AI",
+      "index": 5,
+      "unit": "Hz",
+      "initial": 60.0
+    },
+    {
+      "name": "generator_running",
+      "alias": "running",
+      "direction": "telemetry",
+      "dnp3_type": "BI",
+      "index": 2,
+      "unit": "bool",
+      "initial": false
+    },
+    {
+      "name": "temperature_c",
+      "alias": "temp",
+      "direction": "telemetry",
+      "dnp3_type": "AI",
+      "index": 8,
+      "unit": "C",
+      "initial": 26.0
+    }
+  ]
+}

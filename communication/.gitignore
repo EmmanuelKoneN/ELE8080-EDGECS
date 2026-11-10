@@ -1,0 +1,16 @@
+# Build outputs and runtime scratch directories
+/DERMS/build/
+/Gateway/build/
+/DERMS/uploads/
+/uploads/
+
+# Python caches and local test-application state
+__pycache__/
+*.py[cod]
+/TestApps/.venv/
+/TestApps/.local/
+
+# Windows download metadata and editor backups
+*:Zone.Identifier
+*.bak
+*~

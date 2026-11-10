@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "device_id": "bess-02",
+  "name": "Batterie simulee numero 2",
+  "der_type": "BESS",
+  "dnp3": {
+    "host": "127.0.0.1",
+    "port": 20001,
+    "master_address": 1,
+    "outstation_address": 12
+  },
+  "mqtt": {
+    "host": "127.0.0.1",
+    "port": 1883
+  },
+  "master_api_host": "127.0.0.1",
+  "master_api_port": 8443,
+  "points": [
+    {
+      "name": "power_setpoint_kw",
+      "alias": "power",
+      "direction": "command",
+      "dnp3_type": "AO",
+      "index": 0,
+      "unit": "kW",
+      "min": -50.0,
+      "max": 50.0,
+      "feedback_point": "measured_power_kw"
+    },
+    {
+      "name": "enable",
+      "direction": "command",
+      "dnp3_type": "BO",
+      "index": 0,
+      "unit": "bool",
+      "feedback_point": "running"
+    },
+    {
+      "name": "measured_power_kw",
+      "alias": "power",
+      "direction": "telemetry",
+      "dnp3_type": "AI",
+      "index": 0,
+      "unit": "kW",
+      "initial": 0.0
+    },
+    {
+      "name": "soc_pct",
+      "alias": "soc",
+      "direction": "telemetry",
+      "dnp3_type": "AI",
+      "index": 1,
+      "unit": "%",
+      "initial": 65.0
+    },
+    {
+      "name": "running",
+      "direction": "telemetry",
+      "dnp3_type": "BI",
+      "index": 0,
+      "unit": "bool",
+      "initial": false
+    }
+  ]
+}
