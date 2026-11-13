@@ -71,6 +71,8 @@ ders:
 
 ## 4. Contrat commun : `modele_der.py`
 
+![Entrées et sorties du BESS vu de la passerelle](figures/bess_entrees_sorties.svg)
+
 | Élément | Contenu |
 |---|---|
 | `OperationalState` | `STOPPED`, `RUNNING` |
