@@ -217,3 +217,23 @@ Gabarit d'une entrée :
     nos entrées et que leurs noms ne font pas partie de l'interface publique.
 - Hors portée : le passage de ces champs aux points DNP3 (`points_dnp3.yaml`) relève du volet
   Communication.
+
+## D-014 — Clés de configuration en anglais
+- Date : 2026-11-19
+- Statut : Adoptée
+- Exigences : G-003
+- Décision : les clés de `der.yaml` sont en anglais et portent le même nom que les champs du code.
+  Les clés citées dans D-007 et D-011 sont renommées ainsi :
+
+  | Ancienne clé | Nouvelle clé |
+  |---|---|
+  | `simulation.pas_s` | `simulation.step_s` |
+  | `p_decharge_max_kw` | `discharge_max_kw` |
+  | `p_charge_max_kw` | `charge_max_kw` |
+  | `capacite_kwh` | `capacity_kwh` |
+
+  `soc_min_pct`, `soc_max_pct` et `soc_initial_pct` ne changent pas.
+- Raison : les noms de code du projet sont en anglais. Une clé identique au champ se lit
+  directement dans `BessConfig`, sans table de traduction à maintenir.
+- Écartées : clés en français traduites vers des champs en anglais, rejeté pour éviter cette
+  table.

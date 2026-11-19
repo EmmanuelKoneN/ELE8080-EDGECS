@@ -46,14 +46,14 @@ tests/gateway/simulation_der/        tests pytest
 
 ```yaml
 simulation:
-  pas_s: 1
+  step_s: 1
 
 ders:
   der1:
     type: bess
-    p_decharge_max_kw: 100
-    p_charge_max_kw: 100
-    capacite_kwh: 200
+    discharge_max_kw: 100
+    charge_max_kw: 100
+    capacity_kwh: 200
     soc_min_pct: 10
     soc_max_pct: 90
     soc_initial_pct: 50
@@ -95,12 +95,12 @@ même.
 
 ## 6. BESS : `modele_bess.py`
 
-`BessConfig.from_mapping()` valide les champs de la section 3. `BessModel(der_id, config, pas_s)`
+`BessConfig.from_mapping()` valide les champs de la section 3. `BessModel(der_id, config, step_s)`
 crée un `DER_BESS` avec les paramètres de `der_file` listés au journal D-011 (kW→W, kWh→Wh, %→pu).
 
 **Commandes.** Les refus sont explicites, sans troncature silencieuse (journal D-004).
 - `set_active_power(p_kw)` :
-  - refusée si `p_kw` est non fini ou hors de `[-p_charge_max, +p_decharge_max]` (F-403, G-011) ;
+  - refusée si `p_kw` est non fini ou hors de `[-charge_max_kw, +discharge_max_kw]` (F-403, G-011) ;
   - refusée si l'état n'est pas `RUNNING` (S-405) ;
   - sinon, la consigne est mémorisée.
 - `start()` passe à `RUNNING`.
@@ -160,7 +160,7 @@ crée un `DER_BESS` avec les paramètres de `der_file` listés au journal D-011 
 1. **Dépendances.** Fait. `opender==2.2.0` dans `requirements.txt` (journal D-002). `pytest` dans
    `requirements-dev.txt`. `[tool.pytest.ini_options] testpaths = ["tests"]` dans `pyproject.toml`.
 2. Écrire `modele_der.py`, avec la télémétrie complète de F-402 (journal D-013).
-3. Écrire `modele_bess.py` et ses tests.
+3. Écrire `modele_bess.py` et ses tests, selon [plan_modele_bess.md](plan_modele_bess.md).
 4. Écrire `fabrique_der.py`, `der.yaml` et leurs tests.
 5. Écrire `module_simulation_der.py` et ses tests.
 6. Modifier `gateway/main.py`.
@@ -179,7 +179,7 @@ retard (journal D-011).
 | Sujet | Cas |
 |---|---|
 | Commandes | consigne valide acceptée, P mesurée = consigne ; consigne hors limites, NaN ou envoyée à l'arrêt refusée, état inchangé ; `start`/`stop` idempotents |
-| SOC | variation = `P·pas/capacité` à la tolérance près ; charge et décharge prolongées atteignent exactement `soc_max`/`soc_min` sans les franchir ; `SOC_LIMIT` levée puis retombée quand la consigne s'inverse ; même chose avec `p_charge_max ≠ p_decharge_max` (défaut d'OpenDER, D-011) |
+| SOC | variation = `P·pas/capacité` à la tolérance près ; charge et décharge prolongées atteignent exactement `soc_max`/`soc_min` sans les franchir ; `SOC_LIMIT` levée puis retombée quand la consigne s'inverse ; même chose avec `charge_max_kw ≠ discharge_max_kw` (défaut d'OpenDER, D-011) |
 | Télémétrie (F-402) | tous les champs présents et finis ; Q égal à la valeur qu'OpenDER donne avec ses modes de puissance réactive par défaut, à relever à l'étape 3 ; \|V\|, ∠V et f égaux aux valeurs appliquées au modèle |
 | Arrêt | P = 0 dès le pas suivant, SOC figé à partir du second |
 | Configuration | chaque champ manquant, inconnu ou incohérent, type inconnu, identifiant absent : `ValueError` |
