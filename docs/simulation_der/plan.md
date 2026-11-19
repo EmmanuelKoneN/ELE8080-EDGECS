@@ -1,21 +1,24 @@
 # Simulation des DER : plan de réalisation
 
-État au 2026-11-03, branche `feature/simulation`. Les identifiants comme `F-403` renvoient au
-Tableau 8.1 du cahier des charges (`assets/ELE8080 EDGECS Cahier des charges Rev01.pdf`).
+État au 2026-11-19, branche `feature/simulation`, aligné sur la **Rév. 01 du 2026-11-05** du
+cahier des charges. Les identifiants comme `F-403` renvoient au Tableau 8.1, transcrit dans
+[docs/exigences.md](../exigences.md) (PDF : `assets/ELE8080 EDGECS Cahier_des_charges_Rev01.pdf`).
 Les choix et leurs raisons sont tenus dans [journal_decisions.md](journal_decisions.md). Toute
 modification de ce plan y ajoute une entrée.
 
 ## 1. Objet et portée
 
-La passerelle commande et supervise des DER simulées (section 8.4). Le MVP en réalise une seule,
-un BESS fondé sur le modèle `DER_BESS` d'EPRI OpenDER. La structure doit permettre d'ajouter
-d'autres DER et d'autres types sans toucher au code existant. C'est la condition pour atteindre
-trois DER simultanées (G-001).
+La passerelle commande et supervise des DER simulées (section 8.4). La Rév. 01 fixe la
+configuration de référence à deux BESS et une génératrice (figure 8.1). Le MVP en réalise une
+seule, un BESS fondé sur le modèle `DER_BESS` d'EPRI OpenDER (journal D-012). La structure doit
+permettre d'ajouter le second BESS par configuration et la génératrice par un nouveau type, sans
+toucher au code existant. C'est la condition pour atteindre trois DER simultanées (G-001).
 
-**Exigences couvertes :** G-001 (structure), G-003, G-011, PH-400, F-401, F-402, F-403, F-404, S-405.
+**Exigences couvertes :** G-001 (structure), G-003, G-006, G-011, PH-400, F-401, F-402, F-403,
+F-404, S-405.
 
-**Hors portée :** outstation DNP3, application réceptrice, `points_dnp3.yaml`, simulation du
-réseau au PCC, types de DER autres que le BESS.
+**Hors portée :** outstation DNP3, application réceptrice, `points_dnp3.yaml` (volet
+Communication), simulation du réseau au PCC, génératrice.
 
 ## 2. Structure
 
@@ -37,20 +40,20 @@ tests/gateway/simulation_der/        tests pytest
 | Cas | Travail |
 |---|---|
 | Une DER d'un type existant (ex. un 2e BESS) | Une entrée dans `der.yaml`, et son identifiant dans `EDGECS_DER_IDS`. Aucun code. |
-| Un nouveau type (ex. génératrice) | Un fichier `modele_<type>.py` qui implémente `DerModel` et une configuration `from_mapping()`, une ligne dans `DER_TYPES` de `fabrique_der.py`, ses tests. Aucun autre fichier modifié. |
+| Un nouveau type (la génératrice de la figure 8.1) | Un fichier `modele_<type>.py` qui implémente `DerModel` et une configuration `from_mapping()`, une ligne dans `DER_TYPES` de `fabrique_der.py`, ses tests. Aucun autre fichier modifié. |
 
 ## 3. Configuration : `gateway/configuration/der.yaml`
 
 ```yaml
 simulation:
-  pas_s: 1
+  step_s: 1
 
 ders:
   der1:
     type: bess
-    p_decharge_max_kw: 100
-    p_charge_max_kw: 100
-    capacite_kwh: 200
+    discharge_max_kw: 100
+    charge_max_kw: 100
+    capacity_kwh: 200
     soc_min_pct: 10
     soc_max_pct: 90
     soc_initial_pct: 50
@@ -77,12 +80,13 @@ ders:
 |---|---|
 | `OperationalState` | `STOPPED`, `RUNNING` |
 | `ConnectionState` | `CONNECTED`, `DISCONNECTED` (le second servira avec un transport réel) |
-| `Alarm` | `NONE`, `SOC_LIMIT` (puissance limitée par le SOC), `FAULT` (erreur du modèle) |
-| `DerTelemetry` (figée) | `der_id`, `der_type`, `p_kw`, `soc_pct` (`None` hors stockage, F-404), `operational_state`, `connection_state`, `alarm`, `timestamp` UTC (F-401, F-402) |
+| `AlarmState` | `NONE`, `SOC_LIMIT` (puissance limitée par le SOC), `FAULT` (erreur du modèle) |
+| `DerTelemetry` (figée) | `der_id`, `der_type` (F-401) ; `v_pu`, `v_angle_deg`, `f_hz`, `p_kw`, `q_kvar` (F-402, journal D-013) ; `soc_pct` (`None` hors stockage, F-404) ; `operational_state`, `connection_state`, `alarm_state` (F-402) ; `timestamp` UTC |
 | `CommandResult` (figée) | `accepted`, `reason` |
 | `DerModel` (`Protocol`) | `start()`, `stop()` et `set_active_power(p_kw)`, qui retournent chacune un `CommandResult`, puis `step()` et `telemetry()` (PH-400, F-403) |
 
-**Convention de signe (8.4) :** P > 0 = injection, P < 0 = absorption. OpenDER suit la même.
+**Convention de signe (section 8.4) :** P > 0 = injection, P < 0 = absorption. OpenDER suit la
+même.
 
 ## 5. Fabrique : `fabrique_der.py`
 
@@ -93,12 +97,12 @@ ders:
 
 ## 6. BESS : `modele_bess.py`
 
-`BessConfig.from_mapping()` valide les champs de la section 3. `BessModel(der_id, config, pas_s)`
+`BessConfig.from_mapping()` valide les champs de la section 3. `BessModel(der_id, config, step_s)`
 crée un `DER_BESS` avec les paramètres de `der_file` listés au journal D-011 (kW→W, kWh→Wh, %→pu).
 
 **Commandes.** Les refus sont explicites, sans troncature silencieuse (journal D-004).
 - `set_active_power(p_kw)` :
-  - refusée si `p_kw` est non fini ou hors de `[-p_charge_max, +p_decharge_max]` (F-403, G-011) ;
+  - refusée si `p_kw` est non fini ou hors de `[-charge_max_kw, +discharge_max_kw]` (F-403, G-011) ;
   - refusée si l'état n'est pas `RUNNING` (S-405) ;
   - sinon, la consigne est mémorisée.
 - `start()` passe à `RUNNING`.
@@ -109,14 +113,20 @@ crée un `DER_BESS` avec les paramètres de `der_file` listés au journal D-011 
 2. **Garde de SOC** (journal D-005). La puissance est bornée à l'énergie disponible jusqu'à la
    limite sur un pas : `(soc − soc_min) · capacité / pas` en décharge, et l'équivalent en charge.
    Le `soc` est celui qui résultera de la puissance du pas précédent, qu'OpenDER n'intègre qu'au
-   pas suivant (journal D-011). Le SOC atteint la limite sans la franchir (G-011). `Alarm.SOC_LIMIT` est active tant que la
+   pas suivant (journal D-011). Le SOC atteint la limite sans la franchir (G-011). `AlarmState.SOC_LIMIT` est active tant que la
    garde réduit la consigne. La consigne reste acceptée.
-3. Appel de `update_der_input(v_pu=NOMINAL_VOLTAGE_PU, f=NOMINAL_FREQUENCY_HZ, p_dem_pu=…)` puis
-   `run()` (journal D-006).
+3. Appel de `update_der_input(v_pu=NOMINAL_VOLTAGE_PU, f=NOMINAL_FREQUENCY_HZ, p_dem_kw=…)` puis
+   `run()` (journal D-006, D-011). L'angle n'est pas passé à OpenDER : le modèle est triphasé par
+   défaut et son entrée `theta` attend alors trois angles (journal D-013).
 4. **Invariant.** Si le SOC sort des bornes, ou si une sortie est NaN ou infinie, on lève une
    `RuntimeError`.
 
-`telemetry()` retourne l'instantané courant (P en kW, SOC en %).
+`telemetry()` retourne l'instantané courant (F-402, journal D-013) :
+- P en kW (`p_out_kw`) et Q en kvar (`q_out_kvar`), sorties d'OpenDER converties en `float` ;
+- |V| en pu, ∠V en degrés et f en Hz : les valeurs appliquées aux bornes du modèle, soit
+  `NOMINAL_VOLTAGE_PU`, `NOMINAL_VOLTAGE_ANGLE_DEG` (0, la phase de référence) et
+  `NOMINAL_FREQUENCY_HZ` ;
+- SOC en %.
 
 ## 7. Module : `module_simulation_der.py`
 
@@ -126,7 +136,7 @@ crée un `DER_BESS` avec les paramètres de `der_file` listés au journal D-011 
 - `start()` lit `der.yaml`, crée les DER par la fabrique, puis lance une tâche de pas.
 - La tâche fait des pas à échéances absolues (`t0 + k·pas`, horloge monotone), sans dérive.
 - Une exception dans le `step()` d'une DER est journalisée avec sa trace. Cette DER passe à
-  `STOPPED` et `Alarm.FAULT` et n'est plus avancée. Les autres DER et la passerelle continuent
+  `STOPPED` et `AlarmState.FAULT` et n'est plus avancée. Les autres DER et la passerelle continuent
   (journal D-009).
 - `stop()` annule la tâche et l'attend.
 - Le journal (`logging`) trace les commandes acceptées ou refusées avec leur raison, et les
@@ -142,17 +152,17 @@ crée un `DER_BESS` avec les paramètres de `der_file` listés au journal D-011 
 
 ## 9. Étapes de réalisation
 
-0. **Vérifier OpenDER sous Python 3.11 / Linux.** Fait, résultats au journal D-011. Ses métadonnées ne déclarent que Python 3.7 sous
-   Windows. Installer `opender==2.2.0` dans `.venv` et exécuter l'exemple Ex5 (BESS, SOC). Relever :
+0. **Vérifier OpenDER sous Python 3.11 / Linux.** Fait, résultats au journal D-011. Ses
+   métadonnées ne déclarent que Python 3.7 sous Windows. Installer `opender==2.2.0` dans `.venv` et exécuter l'exemple Ex5 (BESS, SOC). Relever :
    - les unités (W, Wh) et l'échelle de `bess_soc` ;
    - un éventuel rendement dans l'intégration du SOC ;
    - les noms exacts des attributs de `der_file`.
 
    Consigner les résultats dans le journal. En cas d'échec, revenir vers l'équipe.
-1. **Dépendances.** `opender==2.2.0` dans `requirements.txt` (journal D-002). `pytest` dans
+1. **Dépendances.** Fait. `opender==2.2.0` dans `requirements.txt` (journal D-002). `pytest` dans
    `requirements-dev.txt`. `[tool.pytest.ini_options] testpaths = ["tests"]` dans `pyproject.toml`.
-2. Écrire `modele_der.py`.
-3. Écrire `modele_bess.py` et ses tests.
+2. Écrire `modele_der.py`, avec la télémétrie complète de F-402 (journal D-013).
+3. Écrire `modele_bess.py` et ses tests, selon [plan_modele_bess.md](plan_modele_bess.md).
 4. Écrire `fabrique_der.py`, `der.yaml` et leurs tests.
 5. Écrire `module_simulation_der.py` et ses tests.
 6. Modifier `gateway/main.py`.
@@ -171,10 +181,11 @@ retard (journal D-011).
 | Sujet | Cas |
 |---|---|
 | Commandes | consigne valide acceptée, P mesurée = consigne ; consigne hors limites, NaN ou envoyée à l'arrêt refusée, état inchangé ; `start`/`stop` idempotents |
-| SOC | variation = `P·pas/capacité` à la tolérance près ; charge et décharge prolongées atteignent exactement `soc_max`/`soc_min` sans les franchir ; `SOC_LIMIT` levée puis retombée quand la consigne s'inverse ; même chose avec `p_charge_max ≠ p_decharge_max` (défaut d'OpenDER, D-011) |
+| SOC | variation = `P·pas/capacité` à la tolérance près ; charge et décharge prolongées atteignent exactement `soc_max`/`soc_min` sans les franchir ; `SOC_LIMIT` levée puis retombée quand la consigne s'inverse ; même chose avec `charge_max_kw ≠ discharge_max_kw` (défaut d'OpenDER, D-011) |
+| Télémétrie (F-402) | tous les champs présents et finis ; Q égal à la valeur qu'OpenDER donne avec ses modes de puissance réactive par défaut, à relever à l'étape 3 ; \|V\|, ∠V et f égaux aux valeurs appliquées au modèle |
 | Arrêt | P = 0 dès le pas suivant, SOC figé à partir du second |
 | Configuration | chaque champ manquant, inconnu ou incohérent, type inconnu, identifiant absent : `ValueError` |
-| Fabrique | deux BESS dans `der.yaml` donnent deux modèles indépendants (G-001) |
+| Fabrique | deux BESS dans `der.yaml` donnent deux modèles indépendants (G-001, figure 8.1) |
 | Module | une exception injectée dans une DER donne `FAULT` pour elle seule, les autres continuent ; `stop()` se termine proprement |
 
 ## 11. Vérification

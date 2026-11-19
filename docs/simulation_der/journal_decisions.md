@@ -20,14 +20,14 @@ Gabarit d'une entrée :
 
 ## D-001 — MVP limité à une DER, un BESS
 - Date : 2026-11-03
-- Statut : Adoptée
+- Statut : Remplacée par D-012
 - Exigences : G-001, F-404
 - Décision : le MVP simule une seule DER, un BESS. La structure doit toutefois accepter plusieurs
   DER et d'autres types sans modification du code existant (voir D-008).
-- Raison : le BESS couvre le comportement le plus riche de la section 8.4 (charge, décharge, SOC)
-  et est la priorité du mandat.
-- Écartées : trois DER dès le MVP (2 BESS + génératrice, exemple de la figure 8.1), reporté. La
-  composition finale n'est pas encore décidée.
+- Raison : le BESS couvre le comportement le plus riche de la section 8.4 de la Rév. 00 (charge,
+  décharge, SOC) et y est la priorité du mandat.
+- Écartées : trois DER dès le MVP (2 BESS + génératrice, exemple de la figure 8.1 de la Rév. 00),
+  reporté. La composition finale n'était pas encore décidée.
 
 ## D-002 — Modèle BESS fourni par EPRI OpenDER, utilisé comme dépendance
 - Date : 2026-11-03
@@ -76,7 +76,7 @@ Gabarit d'une entrée :
 
 ## D-006 — Tension et fréquence constantes en entrée du modèle
 - Date : 2026-11-03
-- Statut : Adoptée
+- Statut : Remplacée par D-013
 - Exigences : —
 - Décision : OpenDER reçoit `v = 1,0 pu` et `f = 60 Hz`, en constantes nommées.
 - Raison : le couplage avec la simulation du réseau au PCC n'est pas encore conçu. Il remplacera
@@ -180,3 +180,60 @@ Gabarit d'une entrée :
   - les tests tiennent compte du retard d'un pas.
 - Écartées : régler les attributs de `der_file` après la construction, rejeté parce que
   `SOC_INIT` est lu à la création du modèle et qu'il faudrait ensuite appeler `reset_soc()`.
+
+## D-012 — Rév. 01 : configuration de référence fixée, MVP toujours limité à un BESS
+- Date : 2026-11-19
+- Statut : Adoptée
+- Exigences : G-001, F-404
+- Décision : le MVP simule une seule DER, un BESS fondé sur OpenDER (D-002). La structure de D-008
+  doit mener à la configuration de référence de la Rév. 01 (section 8.4, figure 8.1) : deux BESS,
+  le second par configuration seulement, et une génératrice, par un nouveau type.
+- Raison : la Rév. 01 du cahier des charges (2026-11-05) fixe la composition à deux BESS et une
+  génératrice ; la Rév. 00 la laissait ouverte. Le BESS avec OpenDER a reçu le feu vert de
+  l'équipe. Il couvre le comportement le plus riche (charge, décharge, SOC) et compte pour deux
+  des trois DER.
+- Écartées : réaliser les trois DER dès le MVP, reporté. La génératrice n'a pas encore de modèle
+  choisi.
+
+## D-013 — Télémétrie électrique complète (F-402, Rév. 01)
+- Date : 2026-11-19
+- Statut : Adoptée
+- Exigences : F-402
+- Décision : `DerTelemetry` contient |V| (`v_pu`), ∠V (`v_angle_deg`), f (`f_hz`), P (`p_kw`) et
+  Q (`q_kvar`), en plus du SOC et des trois états.
+  - P et Q sont lues dans `p_out_kw` et `q_out_kvar` d'OpenDER.
+  - |V|, ∠V et f sont les valeurs appliquées aux bornes du modèle. Ce sont des constantes nommées :
+    `NOMINAL_VOLTAGE_PU` (1,0), `NOMINAL_VOLTAGE_ANGLE_DEG` (0, phase de référence) et
+    `NOMINAL_FREQUENCY_HZ` (60), comme dans D-006.
+  - L'angle n'est pas transmis à OpenDER. Le modèle est triphasé par défaut (`NP_PHASE = THREE`), et
+    son entrée `theta` attend alors une liste de trois angles en radians. Sans `theta`, le modèle
+    garde ses angles par défaut.
+- Raison : la Rév. 01 étend F-402 à |V|, ∠V, f, P et Q (figure 8.3). La Rév. 00 ne demandait que
+  P. Tant que le couplage au réseau du PCC n'existe pas, les grandeurs aux bornes sont celles
+  qu'on impose au modèle. Le couplage remplacera ces constantes sans changer le contrat.
+- Écartées :
+  - omettre |V|, ∠V et f jusqu'au couplage, rejeté parce que F-402 les exige dès maintenant ;
+  - lire V et f dans les attributs internes d'OpenDER, rejeté parce qu'ils ne font que refléter
+    nos entrées et que leurs noms ne font pas partie de l'interface publique.
+- Hors portée : le passage de ces champs aux points DNP3 (`points_dnp3.yaml`) relève du volet
+  Communication.
+
+## D-014 — Clés de configuration en anglais
+- Date : 2026-11-19
+- Statut : Adoptée
+- Exigences : G-003
+- Décision : les clés de `der.yaml` sont en anglais et portent le même nom que les champs du code.
+  Les clés citées dans D-007 et D-011 sont renommées ainsi :
+
+  | Ancienne clé | Nouvelle clé |
+  |---|---|
+  | `simulation.pas_s` | `simulation.step_s` |
+  | `p_decharge_max_kw` | `discharge_max_kw` |
+  | `p_charge_max_kw` | `charge_max_kw` |
+  | `capacite_kwh` | `capacity_kwh` |
+
+  `soc_min_pct`, `soc_max_pct` et `soc_initial_pct` ne changent pas.
+- Raison : les noms de code du projet sont en anglais. Une clé identique au champ se lit
+  directement dans `BessConfig`, sans table de traduction à maintenir.
+- Écartées : clés en français traduites vers des champs en anglais, rejeté pour éviter cette
+  table.
