@@ -78,8 +78,8 @@ ders:
 |---|---|
 | `OperationalState` | `STOPPED`, `RUNNING` |
 | `ConnectionState` | `CONNECTED`, `DISCONNECTED` (le second servira avec un transport réel) |
-| `Alarm` | `NONE`, `SOC_LIMIT` (puissance limitée par le SOC), `FAULT` (erreur du modèle) |
-| `DerTelemetry` (figée) | `der_id`, `der_type` (F-401) ; `v_pu`, `v_angle_deg`, `f_hz`, `p_kw`, `q_kvar` (F-402, journal D-013) ; `soc_pct` (`None` hors stockage, F-404) ; `operational_state`, `connection_state`, `alarm` (F-402) ; `timestamp` UTC |
+| `AlarmState` | `NONE`, `SOC_LIMIT` (puissance limitée par le SOC), `FAULT` (erreur du modèle) |
+| `DerTelemetry` (figée) | `der_id`, `der_type` (F-401) ; `v_pu`, `v_angle_deg`, `f_hz`, `p_kw`, `q_kvar` (F-402, journal D-013) ; `soc_pct` (`None` hors stockage, F-404) ; `operational_state`, `connection_state`, `alarm_state` (F-402) ; `timestamp` UTC |
 | `CommandResult` (figée) | `accepted`, `reason` |
 | `DerModel` (`Protocol`) | `start()`, `stop()` et `set_active_power(p_kw)`, qui retournent chacune un `CommandResult`, puis `step()` et `telemetry()` (PH-400, F-403) |
 
@@ -111,7 +111,7 @@ crée un `DER_BESS` avec les paramètres de `der_file` listés au journal D-011 
 2. **Garde de SOC** (journal D-005). La puissance est bornée à l'énergie disponible jusqu'à la
    limite sur un pas : `(soc − soc_min) · capacité / pas` en décharge, et l'équivalent en charge.
    Le `soc` est celui qui résultera de la puissance du pas précédent, qu'OpenDER n'intègre qu'au
-   pas suivant (journal D-011). Le SOC atteint la limite sans la franchir (G-011). `Alarm.SOC_LIMIT` est active tant que la
+   pas suivant (journal D-011). Le SOC atteint la limite sans la franchir (G-011). `AlarmState.SOC_LIMIT` est active tant que la
    garde réduit la consigne. La consigne reste acceptée.
 3. Appel de `update_der_input(v_pu=NOMINAL_VOLTAGE_PU, f=NOMINAL_FREQUENCY_HZ, p_dem_kw=…)` puis
    `run()` (journal D-006, D-011). L'angle n'est pas passé à OpenDER : le modèle est triphasé par
@@ -134,7 +134,7 @@ crée un `DER_BESS` avec les paramètres de `der_file` listés au journal D-011 
 - `start()` lit `der.yaml`, crée les DER par la fabrique, puis lance une tâche de pas.
 - La tâche fait des pas à échéances absolues (`t0 + k·pas`, horloge monotone), sans dérive.
 - Une exception dans le `step()` d'une DER est journalisée avec sa trace. Cette DER passe à
-  `STOPPED` et `Alarm.FAULT` et n'est plus avancée. Les autres DER et la passerelle continuent
+  `STOPPED` et `AlarmState.FAULT` et n'est plus avancée. Les autres DER et la passerelle continuent
   (journal D-009).
 - `stop()` annule la tâche et l'attend.
 - Le journal (`logging`) trace les commandes acceptées ou refusées avec leur raison, et les
