@@ -7,20 +7,15 @@
 """
 
 
+## @brief Planification et gestion de la puissance des DER.
 class PlanificationModule:
-    """!
-    @brief Planification et gestion de la puissance des DER.
-    """
-
     ## Nom du module affiché dans le journal et sur /sante.
     name: str = "planification"
 
+    ## @brief Démarre le module.
     async def start(self) -> None:
-        """!
-        @brief Démarre le module.
-        """
+        pass
 
+    ## @brief Arrête le module.
     async def stop(self) -> None:
-        """!
-        @brief Arrête le module.
-        """
+        pass

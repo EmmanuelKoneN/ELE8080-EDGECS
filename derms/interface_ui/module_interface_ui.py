@@ -7,20 +7,15 @@
 """
 
 
+## @brief Application Web de l'opérateur.
 class InterfaceUiModule:
-    """!
-    @brief Application Web de l'opérateur.
-    """
-
     ## Nom du module affiché dans le journal et sur /sante.
     name: str = "interface_ui"
 
+    ## @brief Démarre le module.
     async def start(self) -> None:
-        """!
-        @brief Démarre le module.
-        """
+        pass
 
+    ## @brief Arrête le module.
     async def stop(self) -> None:
-        """!
-        @brief Arrête le module.
-        """
+        pass

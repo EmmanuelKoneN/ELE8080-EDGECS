@@ -8,11 +8,8 @@
 from enum import StrEnum
 
 
+## @brief État d'un module du DERMS.
 class ModuleState(StrEnum):
-    """!
-    @brief État d'un module du DERMS.
-    """
-
     ## Le module n'a pas encore été démarré.
     NOT_STARTED = "non_demarre"
 

@@ -23,7 +23,7 @@ Les autres sont vérifiées lors de la revue de code.
 |---|---|---|
 | Formatage automatique | clang-format | `ruff format` (et clang-format pour le C++ éventuel) |
 | Vérification du standard | revue de code | `ruff check` + revue de code |
-| Documentation externe | Doxygen, `///` dans les `.h` | Doxygen, docstrings `"""!` |
+| Documentation externe | Doxygen, `///` dans les `.h` | Doxygen, commentaires `##` au-dessus |
 | Configuration | `.clang-format`, `Doxyfile` | `pyproject.toml`, `.clang-format`, `Doxyfile` |
 
 Le formatage se fait **automatiquement à l'enregistrement** dans VS Code.
@@ -190,18 +190,21 @@ Ces principes du cours ne sont pas obligatoires, mais ils guident les revues de 
 
 ### Où documenter
 
-- **Tous les éléments publics** : modules, classes, fonctions et constantes utilisées par
-  d'autres modules. C'est la documentation externe, générée par Doxygen.
+- **Tous les éléments publics** : modules, classes, fonctions, méthodes, constantes et champs
+  (par exemple ceux d'une `@dataclass` ou les valeurs d'une `Enum`) utilisés par d'autres
+  modules. C'est la documentation externe, générée par Doxygen : un champ public sans `##`
+  produit un avertissement, et la CI échoue.
 - Les éléments internes (nom qui commence par `_`) sont documentés par des commentaires
   normaux, seulement si c'est utile.
 
 ### Format
 
-En Python, la documentation Doxygen s'écrit dans une docstring qui commence par `"""!`.
-Pour une constante, on utilise `##` sur la ligne au-dessus.
+En Python, la documentation Doxygen s'écrit en commentaires `##` **sur les lignes au-dessus** de
+l'élément documenté, comme `///` en C++ : classes, fonctions, méthodes, constantes et champs.
+Pour une classe décorée (`@dataclass`), les `##` vont au-dessus du décorateur.
 
-**Attention :** sans `@file` en haut du fichier, Doxygen ne documente pas le fichier,
-exactement comme en C++.
+Seul l'en-tête du fichier reste une docstring qui commence par `"""!`. **Attention :** sans
+`@file` en haut du fichier, Doxygen ne documente pas le fichier, exactement comme en C++.
 
 ```python
 """!
@@ -212,28 +215,37 @@ exactement comme en C++.
 @note Fait partie du module de planification du DERMS (section 8.1).
 """
 
+from dataclasses import dataclass
 from typing import Final
 
 ## Puissance maximale importée au PCC avant l'écrêtage, en kW.
 PEAK_LIMIT_KW: Final[float] = 150.0
 
 
-class PeakShaver:
-    """!
-    @brief Calcule les consignes d'écrêtage des pointes.
-    @details Répartit la puissance excédentaire au PCC entre les DER disponibles,
-    en respectant les limites de chacune.
-    """
+## @brief Consigne de puissance calculée pour une DER.
+@dataclass(frozen=True, slots=True)
+class Setpoint:
+    ## Identifiant de la DER visée.
+    der_id: int
 
-    def compute_setpoints(self, pcc_power_kw: float) -> dict[str, float]:
-        """!
-        @brief Calcule la consigne de chaque DER pour ramener la puissance sous la limite.
-        @param[in] pcc_power_kw Puissance mesurée au PCC, en kW.
-        @return Consigne de puissance active par identifiant de DER, en kW.
-        @throw ValueError Si la puissance mesurée est négative.
-        @note Les DER hors ligne sont ignorées.
-        """
+    ## Puissance active demandée, en kW (négative en charge).
+    active_power_kw: float
+
+
+## @brief Calcule les consignes d'écrêtage des pointes.
+## @details Répartit la puissance excédentaire au PCC entre les DER disponibles,
+## en respectant les limites de chacune.
+class PeakShaver:
+    ## @brief Calcule la consigne de chaque DER pour ramener la puissance sous la limite.
+    ## @param[in] pcc_power_kw Puissance mesurée au PCC, en kW.
+    ## @return Une consigne par DER disponible.
+    ## @throw ValueError Si la puissance mesurée est négative.
+    ## @note Les DER hors ligne sont ignorées.
+    def compute_setpoints(self, pcc_power_kw: float) -> list[Setpoint]:
 ```
+
+Les commentaires `##` ne sont pas des docstrings : le survol dans VS Code et `help()` en Python ne
+les affichent pas. On les lit dans le code ou dans la documentation générée.
 
 ### Mots-clefs principaux
 

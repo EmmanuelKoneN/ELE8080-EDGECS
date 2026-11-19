@@ -7,20 +7,15 @@
 """
 
 
+## @brief Enregistrement des DER et tenue de leur inventaire.
 class InitialisationModule:
-    """!
-    @brief Enregistrement des DER et tenue de leur inventaire.
-    """
-
     ## Nom du module affiché dans le journal et sur /sante.
     name: str = "initialisation"
 
+    ## @brief Démarre le module.
     async def start(self) -> None:
-        """!
-        @brief Démarre le module.
-        """
+        pass
 
+    ## @brief Arrête le module.
     async def stop(self) -> None:
-        """!
-        @brief Arrête le module.
-        """
+        pass

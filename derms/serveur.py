@@ -20,6 +20,7 @@ from fastapi.staticfiles import StaticFiles
 
 from derms.configuration.module_configuration import ConfigurationModule
 from derms.dnp3_master.module_dnp3_master import Dnp3MasterModule
+from derms.donnees_partagees import SystemState
 from derms.etat_module import ModuleState
 from derms.initialisation.module_initialisation import InitialisationModule
 from derms.interface_ui.module_interface_ui import InterfaceUiModule
@@ -36,40 +37,29 @@ INTERFACE_DIR: Final[Path] = Path(__file__).parent / "interface_ui" / "static"
 _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
+## @brief Démarre et arrête les modules, et retient l'état de chacun.
+## @details L'échec d'un module n'arrête pas le serveur : l'interface Web doit rester accessible
+## pour signaler l'erreur à l'opérateur (PF-113).
 class ModuleSupervisor:
-    """!
-    @brief Démarre et arrête les modules, et retient l'état de chacun.
-    @details L'échec d'un module n'arrête pas le serveur : l'interface Web doit rester accessible
-    pour signaler l'erreur à l'opérateur (PF-113).
-    """
-
+    ## @brief Prépare la supervision des modules.
+    ## @param[in] modules Modules, dans leur ordre de démarrage.
     def __init__(self, modules: list[Any]) -> None:
-        """!
-        @brief Prépare la supervision des modules.
-        @param[in] modules Modules, dans leur ordre de démarrage.
-        """
         self._modules = modules
         self._states = {module.name: ModuleState.NOT_STARTED for module in modules}
 
+    ## @brief Donne l'état actuel des modules.
+    ## @return Une copie de l'état de chaque module, par nom de module.
     @property
     def states(self) -> dict[str, ModuleState]:
-        """!
-        @brief Donne l'état actuel des modules.
-        @return Une copie de l'état de chaque module, par nom de module.
-        """
         return dict(self._states)
 
+    ## @brief Démarre les modules dans l'ordre, même si l'un d'eux échoue.
     async def start_all(self) -> None:
-        """!
-        @brief Démarre les modules dans l'ordre, même si l'un d'eux échoue.
-        """
         for module in self._modules:
             await self._start(module)
 
+    ## @brief Arrête les modules démarrés, dans l'ordre inverse du démarrage.
     async def stop_all(self) -> None:
-        """!
-        @brief Arrête les modules démarrés, dans l'ordre inverse du démarrage.
-        """
         for module in reversed(self._modules):
             if self._states[module.name] is ModuleState.RUNNING:
                 await self._stop(module)
@@ -97,11 +87,9 @@ class ModuleSupervisor:
         _LOGGER.info("Module %s : arrêté", module.name)
 
 
+## @brief Crée les modules du DERMS.
+## @return Les modules, dans leur ordre de démarrage.
 def create_modules() -> list[Any]:
-    """!
-    @brief Crée les modules du DERMS.
-    @return Les modules, dans leur ordre de démarrage.
-    """
     return [
         ConfigurationModule(),
         StockageModule(),
@@ -113,38 +101,34 @@ def create_modules() -> list[Any]:
     ]
 
 
+## @brief Démarre les modules avec le serveur et les arrête avec lui.
+## @param[in] app Application dont l'état contient le superviseur.
+## @return Un itérateur actif tant que le serveur fonctionne.
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """!
-    @brief Démarre les modules avec le serveur et les arrête avec lui.
-    @param[in] app Application dont l'état contient le superviseur.
-    @return Un itérateur actif tant que le serveur fonctionne.
-    """
     supervisor = app.state.supervisor
     await supervisor.start_all()
     yield
     await supervisor.stop_all()
 
 
+## @brief Indique l'état du serveur et de ses modules.
+## @param[in] request Requête reçue, qui donne accès au superviseur.
+## @return Le statut global et l'état de chaque module.
 async def read_health(request: Request) -> dict[str, Any]:
-    """!
-    @brief Indique l'état du serveur et de ses modules.
-    @param[in] request Requête reçue, qui donne accès au superviseur.
-    @return Le statut global et l'état de chaque module.
-    """
     states = request.app.state.supervisor.states
     is_healthy = all(state is ModuleState.RUNNING for state in states.values())
     return {"statut": "ok" if is_healthy else "degrade", "modules": states}
 
 
-def create_app(modules: list[Any]) -> FastAPI:
-    """!
-    @brief Crée l'application Web du DERMS.
-    @param[in] modules Modules à superviser, dans leur ordre de démarrage.
-    @return L'application prête à être servie.
-    """
+## @brief Crée l'application Web du DERMS.
+## @param[in] modules Modules à superviser, dans leur ordre de démarrage.
+## @param[in] system_state État central partagé, gardé pour les futures routes de l'API.
+## @return L'application prête à être servie.
+def create_app(modules: list[Any], system_state: SystemState) -> FastAPI:
     app = FastAPI(title="DERMS EDGECS", lifespan=lifespan)
     app.state.supervisor = ModuleSupervisor(modules)
+    app.state.system_state = system_state
     app.add_api_route(HEALTH_API_PATH, read_health)
     # Monté en dernier : « / » intercepterait sinon les routes de l'API.
     app.mount("/", StaticFiles(directory=INTERFACE_DIR, html=True), name="interface")

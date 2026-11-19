@@ -7,20 +7,15 @@
 """
 
 
+## @brief Stockage local de l'inventaire, des horaires et du journal.
 class StockageModule:
-    """!
-    @brief Stockage local de l'inventaire, des horaires et du journal.
-    """
-
     ## Nom du module affiché dans le journal et sur /sante.
     name: str = "stockage"
 
+    ## @brief Démarre le module.
     async def start(self) -> None:
-        """!
-        @brief Démarre le module.
-        """
+        pass
 
+    ## @brief Arrête le module.
     async def stop(self) -> None:
-        """!
-        @brief Arrête le module.
-        """
+        pass
