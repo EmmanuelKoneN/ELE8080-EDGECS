@@ -100,7 +100,6 @@ accessible et signale l'échec, comme le demande PF-113.
 | DERMS → passerelles | DNP3 sur TCP/IP | Non implémenté | Exigé par PH-142. Bibliothèque à choisir |
 
 **Port ouvert par le serveur (G-012) :** 8000. Aucun port DNP3 n'est utilisé pour l'instant.
-`GATEWAY_ADDRESS` et `GATEWAY_PORT` restent dans `derms/main.py`, mais rien ne les lit encore.
 
 ## 5. Décisions
 

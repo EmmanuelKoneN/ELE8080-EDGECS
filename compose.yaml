@@ -12,9 +12,6 @@ services:
       context: .
       dockerfile: derms/Dockerfile
     image: edgecs-derms
-    environment:
-      # Lu par le futur client DNP3.
-      EDGECS_GATEWAY_ADDRESS: passerelle1
     ports:
       # Interface opérateur sur http://127.0.0.1:8000/, accessible depuis ce PC seulement.
       - "127.0.0.1:8000:8000"

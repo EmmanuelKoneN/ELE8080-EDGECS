@@ -506,8 +506,8 @@ conteneurs prennent le code de vos camarades.
 - Dans un conteneur, `127.0.0.1` désigne le conteneur lui-même. Les programmes y écoutent donc sur
   `0.0.0.0`, grâce aux variables `EDGECS_WEB_ADDRESS` et `EDGECS_LISTEN_ADDRESS` définies dans les
   Dockerfiles. Sans ces variables, ils gardent `127.0.0.1`.
-- Le DERMS joint une passerelle par son nom de service (`passerelle1`), donné par
-  `EDGECS_GATEWAY_ADDRESS` dans `compose.yaml`.
+- Le DERMS joindra une passerelle par son nom de service (`passerelle1`), qui sera donné par une
+  variable `EDGECS_...` dans `compose.yaml` quand le client DNP3 existera.
 - Les passerelles ne sont pas accessibles depuis le PC : seul le DERMS les joint, par le réseau
   `dnp3`.
 - Les fichiers écrits dans un conteneur disparaissent avec lui. Le stockage et les journaux devront

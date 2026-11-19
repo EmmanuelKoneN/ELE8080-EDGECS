@@ -70,24 +70,18 @@ Pour le MVP, la simulation du réseau s'exécute à l'intérieur du serveur, dan
 Le module `dnp3_master/` est la station maîtresse : il envoie les consignes aux passerelles et lit
 leurs mesures, en DNP3 sur TCP/IP (IEEE 1815, profil DER IEEE 1815.2).
 
-La cible est définie dans `derms/main.py` :
+L'interface Web est configurée dans `derms/main.py` :
 
 | Constante | Valeur | Rôle |
 |---|---|---|
-| `GATEWAY_ADDRESS` | `127.0.0.1` | Adresse de la passerelle DNP3 à joindre |
-| `GATEWAY_PORT` | `20000` | Port DNP3 de la passerelle |
 | `WEB_ADDRESS` | `127.0.0.1` | Adresse d'écoute de l'interface Web |
 | `WEB_PORT` | `8000` | Port de l'interface Web |
 
-Deux variables d'environnement remplacent les adresses quand elles sont définies :
+La variable d'environnement `EDGECS_WEB_ADDRESS` remplace `WEB_ADDRESS` quand elle est définie ;
+`derms/Dockerfile` la règle à `0.0.0.0`.
 
-| Variable | Remplace | Valeur sous Docker | Définie dans |
-|---|---|---|---|
-| `EDGECS_GATEWAY_ADDRESS` | `GATEWAY_ADDRESS` | `passerelle1` | `compose.yaml` |
-| `EDGECS_WEB_ADDRESS` | `WEB_ADDRESS` | `0.0.0.0` | `derms/Dockerfile` |
-
-Pour l'instant, `dnp3_master/` confirme seulement son démarrage : aucune liaison DNP3 n'est établie,
-et `GATEWAY_ADDRESS`, `GATEWAY_PORT` et `EDGECS_GATEWAY_ADDRESS` ne sont pas encore utilisés.
+Pour l'instant, `dnp3_master/` confirme seulement son démarrage : aucune liaison DNP3 n'est établie.
+L'adresse et le port de la passerelle seront ajoutés avec le client DNP3, sur le même modèle.
 
 Les points DNP3 sont définis dans [points_dnp3.yaml](../points_dnp3.yaml), encore à l'état de
 brouillon. Ce fichier est le contrat avec la passerelle : voir la règle d'équipe dans

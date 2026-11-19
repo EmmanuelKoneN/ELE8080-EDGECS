@@ -17,15 +17,6 @@ import uvicorn
 from derms.donnees_partagees import Der, Measurement, SystemState
 from derms.serveur import create_app, create_modules
 
-## Adresse de la passerelle DNP3 à joindre si GATEWAY_ADDRESS_VARIABLE n'est pas définie.
-GATEWAY_ADDRESS: Final[str] = "127.0.0.1"
-
-## Variable d'environnement qui remplace GATEWAY_ADDRESS (nom de la passerelle sous Docker).
-GATEWAY_ADDRESS_VARIABLE: Final[str] = "EDGECS_GATEWAY_ADDRESS"
-
-## Port DNP3 de la passerelle.
-GATEWAY_PORT: Final[int] = 20000
-
 ## Adresse d'écoute de l'interface Web si WEB_ADDRESS_VARIABLE n'est pas définie.
 WEB_ADDRESS: Final[str] = "127.0.0.1"
 
@@ -118,7 +109,7 @@ def run_examples(state: SystemState) -> None:
 
 ## @brief Démarre le serveur DERMS et ses modules jusqu'à son arrêt (Ctrl+C).
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
     web_address = os.environ.get(WEB_ADDRESS_VARIABLE, WEB_ADDRESS)
     # Seul état central du DERMS : créé ici une fois, puis partagé par tous les modules.
     state = SystemState()
