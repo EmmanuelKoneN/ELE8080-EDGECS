@@ -67,3 +67,32 @@ async function refresh() {
 
 refresh();
 setInterval(refresh, REFRESH_PERIOD_MS);
+
+// ---------- Essai de l'état central : DER 1 en direct ----------
+// La page s'abonne au flux d'événements (SSE) du serveur : il envoie la DER à chaque changement,
+// sans que la page ait à la redemander. EventSource se reconnecte seul si le serveur redémarre.
+
+const DER_STREAM_PATH = "/api/der/1/flux";
+
+function renderDer(der) {
+  document.getElementById("der-nom").textContent = `${der.name} - en direct`;
+  document.getElementById("der-soc").textContent =
+    der.soc === null ? "Pas encore de mesure" : `${der.soc.value} %`;
+  document.getElementById("der-puissance").textContent =
+    der.desired_output_kw === null ? "Non décidée" : `${der.desired_output_kw} kW`;
+  document.getElementById("der-recu").textContent =
+    der.soc === null ? "—" : new Date(der.soc.received_at).toLocaleTimeString("fr-CA");
+  const status = document.getElementById("der-flux");
+  status.textContent = "Abonné : mise à jour à chaque changement";
+  status.className = "ok";
+}
+
+function renderDerStreamLost() {
+  const status = document.getElementById("der-flux");
+  status.textContent = "Flux interrompu : reconnexion en cours…";
+  status.className = "injoignable";
+}
+
+const derStream = new EventSource(DER_STREAM_PATH);
+derStream.onmessage = (event) => renderDer(JSON.parse(event.data));
+derStream.onerror = renderDerStreamLost;

@@ -1,12 +1,17 @@
 """!
-@file donnees_partagees.py
+@file live_data.py
 @brief État central des dernières valeurs connues, partagées entre les modules.
 @author Équipe EDGECS
 @date 2026-11-20
 """
 
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Final
+
+## Nombre de changements gardés pour un abonné lent ; au-delà, les plus anciens sont perdus.
+SUBSCRIBER_QUEUE_SIZE: Final[int] = 100
 
 
 ## @brief Télémesure reçue, avec ses deux horodatages (G-013).
@@ -61,17 +66,48 @@ class Alarm:
 
 
 ## @brief Dernières valeurs connues du système, partagées par tous les modules du DERMS.
+## @details À n'utiliser que depuis la boucle asyncio : les écritures ne contiennent aucun await,
+## ce qui les rend sûres sans verrou.
 class SystemState:
-    ## @brief Crée un état vide, sans aucune DER.
+    ## @brief Crée un état vide, sans aucune DER ni abonné.
     def __init__(self) -> None:
         self._ders: dict[int, Der] = {}
+        self._subscribers: list[asyncio.Queue[Der]] = []
 
     ## @brief Ajoute une DER, ou remplace celle qui a le même identifiant (F-121).
+    ## @details Chaque abonné reçoit la DER ajoutée dans sa file.
     ## @param[in] der DER à ajouter.
     def add_der(self, der: Der) -> None:
         self._ders[der.der_id] = der
+        self._publish(der)
 
     ## @brief Donne toutes les DER connues.
     ## @return Une copie de la liste des DER.
     def ders(self) -> list[Der]:
         return list(self._ders.values())
+
+    ## @brief Donne une DER par son identifiant.
+    ## @param[in] der_id Identifiant de la DER.
+    ## @return La DER, ou None si aucune DER n'a cet identifiant.
+    def der(self, der_id: int) -> Der | None:
+        return self._ders.get(der_id)
+
+    ## @brief Abonne un lecteur aux changements des DER.
+    ## @return Une file qui recevra chaque DER ajoutée ou modifiée.
+    def subscribe(self) -> asyncio.Queue[Der]:
+        queue: asyncio.Queue[Der] = asyncio.Queue(maxsize=SUBSCRIBER_QUEUE_SIZE)
+        self._subscribers.append(queue)
+        return queue
+
+    ## @brief Désabonne un lecteur, par exemple quand une page Web se ferme.
+    ## @param[in] queue File reçue de subscribe().
+    def unsubscribe(self, queue: asyncio.Queue[Der]) -> None:
+        if queue in self._subscribers:
+            self._subscribers.remove(queue)
+
+    # Dépose la DER dans la file de chaque abonné ; une file pleine perd son plus ancien avis.
+    def _publish(self, der: Der) -> None:
+        for queue in self._subscribers:
+            if queue.full():
+                queue.get_nowait()
+            queue.put_nowait(der)
