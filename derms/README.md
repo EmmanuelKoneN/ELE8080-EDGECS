@@ -42,7 +42,9 @@ Le serveur ne fournit que des données JSON, sous `/api/`. `http://127.0.0.1:800
 l'état de chaque module, avec le statut global `ok` ou `degrade`.
 
 `http://127.0.0.1:8000/` ouvre l'interface opérateur : des fichiers fixes (`interface_ui/static/`)
-qui lisent l'API toutes les 2 s depuis le navigateur.
+qui lisent l'API depuis le navigateur. L'état des modules est relu toutes les 2 s ; les DER sont
+reçues en direct par un flux d'événements (voir [Partage des données entre
+modules](#partage-des-données-entre-modules-état-central)).
 
 Un module est pour l'instant un objet qui offre `name`, `async start()` et `async stop()`. Le contrat
 définitif reste à choisir par l'équipe.
@@ -51,6 +53,78 @@ définitif reste à choisir par l'équipe.
 |---|---|---|
 | `8000` | HTTP | Interface Web du DERMS |
 
+## Partage des données entre modules (état central)
+
+Technique validée par l'équipe. Les modules du DERMS ne s'appellent pas entre eux : ils partagent
+leurs données par un **état central**, l'objet `SystemState` de [live_data.py](live_data.py).
+
+```
+dnp3_master ──écrit──▶ ┌──────────────┐ ──lit──▶ planification
+planification ─écrit─▶ │ SystemState  │ ──lit──▶ interface_ui ──flux SSE──▶ navigateur
+                       └──────────────┘ ──avis──▶ abonnés (subscribe)
+```
+
+### Principe
+
+- **Un seul objet**, créé une fois dans `main()`, puis donné aux modules et rangé dans
+  `app.state.system_state` pour l'API. Personne ne crée son propre `SystemState`.
+- Il garde les **dernières valeurs connues** (le présent). L'historique et ce qui doit survivre à
+  un redémarrage relèvent de `stockage/`.
+- Les fiches qu'il contient (`Der`, `Measurement`, `Alarm`) sont des `@dataclass(frozen=True)` :
+  on ne les modifie pas, on en crée une copie avec `dataclasses.replace`, puis on la redonne à
+  l'état central. Un module ne peut donc pas changer une valeur sans passer par lui.
+
+### Utilisation
+
+| Besoin | Méthode |
+|---|---|
+| Lire une DER | `state.der(der_id)` : la DER, ou `None` si elle n'existe pas |
+| Lire toutes les DER | `state.ders()` : une copie de la liste |
+| Ajouter ou remplacer une DER | `state.add_der(der)` : prévient aussi les abonnés |
+| Être prévenu à chaque changement | `state.subscribe()` : une file `asyncio.Queue` à lire avec `await queue.get()` |
+| Arrêter d'être prévenu | `state.unsubscribe(queue)` |
+
+```python
+der = state.der(1)
+if der is not None and der.soc is not None:
+    print(der.soc.value)                                # lire
+
+state.add_der(replace(der, desired_output_kw=20.0))     # modifier, puis prévenir les abonnés
+```
+
+Une valeur lue peut être `None` : la DER n'existe pas, ou aucune mesure n'est encore arrivée
+(`der.soc`). Il faut le vérifier avant d'utiliser la valeur.
+
+### Règles
+
+1. **Seulement depuis la boucle asyncio.** Les écritures ne contiennent aucun `await` : elles
+   s'exécutent d'un bloc, ce qui rend l'état central sûr sans verrou.
+2. **Un thread n'écrit jamais directement.** Les rappels d'opendnp3 tournent dans leurs propres
+   threads : ils confient l'écriture à la boucle avec
+   `loop.call_soon_threadsafe(state.add_der, der)`.
+3. **Un abonné se désabonne** quand il s'arrête (`try` / `finally`), sinon sa file reste dans la
+   liste et se remplit pour rien. Une file pleine perd ses plus anciens avis
+   (`SUBSCRIBER_QUEUE_SIZE`).
+4. **Chaque donnée a un seul module écrivain.** La répartition (par exemple : `dnp3_master` écrit
+   les mesures, `planification` les consignes) reste à fixer avec le contrat des modules.
+
+### Affichage en direct
+
+`interface_ui/` abonne chaque page ouverte à l'état central. La route
+`/api/der/{der_id}/flux` (`stream_der`) envoie la DER dès l'ouverture, puis à chacun de ses
+changements, en flux d'événements (SSE). Le navigateur la lit avec `EventSource`, qui se reconnecte
+seul si le serveur redémarre. Quand la page se ferme, l'abonnement est retiré.
+
+Les fichiers de l'interface sont envoyés avec `Cache-Control: no-cache` : le navigateur vérifie à
+chaque chargement qu'il a la dernière version.
+
+> **Démonstration temporaire** : au démarrage, `main.py` crée trois batteries d'exemple et fait
+> varier le SOC de la batterie 1 entre 0 et 100 %, à 1 % par seconde. La page
+> `http://127.0.0.1:8000/` le montre en direct. Ce code est à retirer avant la version finale.
+
+> **TODO** : étendre l'état central aux autres données (puissance au PCC, consignes et leur
+> statut, alarmes, état des liens DNP3) et fixer l'écrivain de chacune.
+
 ## Fonctionnement du serveur
 
 Selon le [diagramme d'architecture](../assets/EDGECS_architecture.drawio), le serveur DERMS est un
@@ -58,7 +132,7 @@ hôte Linux. L'opérateur y accède par navigateur Web, en HTTP(S).
 
 Pour le MVP, la simulation du réseau s'exécute à l'intérieur du serveur, dans `simulation_pcc/`.
 
-Échanges logiciels internes :
+Échanges logiciels internes, qui passent par l'état central (voir plus haut) :
 
 - `configuration/` alimente `initialisation/`.
 - `initialisation/` et `interface_ui/` alimentent `planification/`.
