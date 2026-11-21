@@ -9,7 +9,7 @@ const HEALTH_API_PATH = "/api/sante";
 // en dizaines de secondes (G-004, G-005) : quelques secondes suffisent.
 const REFRESH_PERIOD_MS = 2000;
 
-// Libellés des valeurs de ModuleState (derms/etat_module.py).
+// Libellés des valeurs de ModuleState (derms/live_data.py).
 const STATE_LABELS = {
   non_demarre: "… Non démarré",
   demarre: "✓ Démarré",

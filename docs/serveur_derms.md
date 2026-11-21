@@ -52,7 +52,7 @@ Tout tourne dans **un seul processus Python**, autour d'une boucle `asyncio`.
 |---|---|
 | `derms/main.py` | Point d'entrée : configure le journal et lance Uvicorn |
 | `derms/serveur.py` | Application FastAPI, superviseur des modules, liste des modules |
-| `derms/etat_module.py` | États possibles d'un module |
+| `derms/live_data.py` | État central partagé entre les modules (DER, mesures) et états possibles d'un module |
 | `derms/interface_ui/static/` | Interface opérateur : fichiers fixes HTML, CSS et JS qui lisent l'API |
 | `derms/<module>/module_<module>.py` | Classe de chaque module |
 

@@ -24,10 +24,9 @@ from starlette.types import Scope
 
 from derms.configuration.module_configuration import ConfigurationModule
 from derms.dnp3_master.module_dnp3_master import Dnp3MasterModule
-from derms.etat_module import ModuleState
 from derms.initialisation.module_initialisation import InitialisationModule
 from derms.interface_ui.module_interface_ui import InterfaceUiModule, stream_der
-from derms.live_data import SystemState
+from derms.live_data import ModuleState, SystemState
 from derms.planification.module_planification import PlanificationModule
 from derms.simulation_pcc.module_simulation_pcc import SimulationPccModule
 from derms.stockage.module_stockage import StockageModule
@@ -67,7 +66,8 @@ class NoCacheStaticFiles(StaticFiles):
         status_code: int = 200,
     ) -> Response:
         response = super().file_response(full_path, stat_result, scope, status_code)
-        response.headers["Cache-Control"] = INTERFACE_CACHE_CONTROL ##eviter les maj non fonctionnel
+        # Évite que le navigateur affiche une ancienne version après une mise à jour.
+        response.headers["Cache-Control"] = INTERFACE_CACHE_CONTROL
         return response
 
 

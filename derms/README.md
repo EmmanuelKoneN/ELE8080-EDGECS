@@ -87,9 +87,9 @@ planification ─écrit─▶ │ SystemState  │ ──lit──▶ interface_
 ```python
 der = state.der(1)
 if der is not None and der.soc is not None:
-    print(der.soc.value)                                # lire
+    print(der.soc.value)  # lire
 
-state.add_der(replace(der, desired_output_kw=20.0))     # modifier, puis prévenir les abonnés
+state.add_der(replace(der, desired_output_kw=20.0))  # modifier, puis prévenir les abonnés
 ```
 
 Une valeur lue peut être `None` : la DER n'existe pas, ou aucune mesure n'est encore arrivée

@@ -8,10 +8,26 @@
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
+from enum import StrEnum
 from typing import Final
 
 ## Nombre de changements gardés pour un abonné lent ; au-delà, les plus anciens sont perdus.
 SUBSCRIBER_QUEUE_SIZE: Final[int] = 100
+
+
+## @brief État d'un module du DERMS.
+class ModuleState(StrEnum):
+    ## Le module n'a pas encore été démarré.
+    NOT_STARTED = "non_demarre"
+
+    ## Le démarrage du module s'est terminé sans erreur.
+    RUNNING = "demarre"
+
+    ## Le démarrage ou l'arrêt du module a levé une exception.
+    FAILED = "en_echec"
+
+    ## L'arrêt du module s'est terminé sans erreur.
+    STOPPED = "arrete"
 
 
 ## @brief Télémesure reçue, avec ses deux horodatages (G-013).
