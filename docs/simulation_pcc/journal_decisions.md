@@ -108,3 +108,25 @@ Gabarit d'une entrée :
   reçoivent déjà des valeurs nominales constantes (simulation_der D-006).
 - Écartées : produire V et f pour les passer aux DER, rejeté parce que cela ajoute un échange par
   DNP3 sans exigence qui le justifie.
+
+## D-008 — Simulation du réseau gardée côté DERMS
+- Date : 2026-11-24
+- Statut : Adoptée
+- Exigences : F-107, F-108, G-001
+- Décision : `simulation_pcc` reste dans `derms/`, avec la charge et le bilan au PCC (D-001,
+  D-003). La structure sera revue en cours de route si elle ne convient plus, par exemple si la
+  démonstration exige que les DER réagissent physiquement à une panne réseau (V, f).
+- Raison : le PCC fait le bilan de tout le site et le DERMS est le seul à recevoir les télémesures
+  de toutes les passerelles. Aucune exigence ne demande que les DER voient la tension ou la
+  fréquence du réseau (D-007). La structure actuelle ne change ni `points_dnp3.yaml` ni le plan de
+  la simulation des DER.
+- Écartées :
+  - la simulation du réseau dans une passerelle, rejetée parce qu'il y a un seul PCC pour une à
+    trois passerelles, qui ne communiquent pas entre elles ;
+  - une passerelle par élément simulé (charge, réseau, chaque DER), rejetée parce que le bilan et
+    le couplage V, f demanderaient un lien entre passerelles que l'architecture n'a pas, et de
+    nouveaux points DNP3 ;
+  - un processus « site simulé » distinct (charge, réseau et modèles des DER, exposant un compteur
+    PCC en DNP3), écarté pour le MVP parce qu'il déplace les modèles OpenDER hors de la passerelle
+    et ajoute deux interfaces. C'est l'option à reprendre si le couplage V, f → DER devient
+    nécessaire.
