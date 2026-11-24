@@ -1,16 +1,27 @@
-# Build outputs and runtime scratch directories
-/DERMS/build/
-/Gateway/build/
-/DERMS/uploads/
-/uploads/
+# Ignore everything
+/*
+!/.gitignore
 
-# Python caches and local test-application state
+# DERMS
+!/DERMS/
+/DERMS/*
+!/DERMS/src/
+!/DERMS/.vscode/
+!/DERMS/CMakeLists.txt
+!/DERMS/Dockerfile
+
+# Gateway
+!/Gateway/
+/Gateway/*
+!/Gateway/src/
+!/Gateway/config/
+!/Gateway/.vscode/
+!/Gateway/CMakeLists.txt
+!/Gateway/Dockerfile
+
+# Temporary files
 __pycache__/
 *.py[cod]
-/TestApps/.venv/
-/TestApps/.local/
-
-# Windows download metadata and editor backups
-*:Zone.Identifier
 *.bak
 *~
+*:Zone.Identifier
