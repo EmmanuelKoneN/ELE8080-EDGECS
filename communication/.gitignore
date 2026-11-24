@@ -1,6 +1,8 @@
 # Ignore everything
 /*
 !/.gitignore
+#shared 
+!shared
 
 # DERMS
 !/DERMS/
